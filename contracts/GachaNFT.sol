@@ -13,16 +13,18 @@ contract GachaNFT is ERC1155URIStorage {
     uint256 private constant LEGENDARY = 2;
     string[3] private imageURI;
     string[3] private name = ["COMMON", "EPIC", "LEGENDARY"];
-    uint256[3] private rarity = [220, 30, 5];
+    //uint256[3] private rarity = [220, 30, 5];
+    uint256[3] private rarity;
     uint256[3] private tokenValue = [100, 1000, 10000];
 
     string private constant base64jsonPrefix = "data:application/json;base64,";
 
-    constructor(string[3] memory _imageUri) ERC1155("") {
+    constructor(string[3] memory _imageUri, uint256[3] memory _rarity) ERC1155("") {
         imageURI = _imageUri;
-        _mint(msg.sender, COMMON, rarity[COMMON], "");
-        _mint(msg.sender, EPIC, rarity[EPIC], "");
-        _mint(msg.sender, LEGENDARY, rarity[LEGENDARY], "");
+        rarity = _rarity;
+        _mint(msg.sender, COMMON, _rarity[COMMON], "");
+        _mint(msg.sender, EPIC, _rarity[EPIC], "");
+        _mint(msg.sender, LEGENDARY, _rarity[LEGENDARY], "");
     }
 
     // function mint(address to, uint8 nftType) external onlyOwner returns (bool) {
@@ -55,8 +57,6 @@ contract GachaNFT is ERC1155URIStorage {
             );
     }
 
-    error __zeroBalance();
-
     function claimNFT(uint256 tokenId, uint256 amount) external {
         // if (balanceOf(msg.sender, tokenId == 0)) {
         //     revert __zeroBalance();
@@ -64,5 +64,9 @@ contract GachaNFT is ERC1155URIStorage {
         _burn(msg.sender, tokenId, amount);
 
         //transfer
+    }
+
+    function getRarity() external view returns (uint256[3] memory) {
+        return rarity;
     }
 }

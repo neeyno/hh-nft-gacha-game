@@ -5,6 +5,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deploy, log } = deployments
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
+    log(`Network: ${network.name}`)
 
     if (developmentChains.includes(network.name)) {
         log("Deploying mock to the local network...")

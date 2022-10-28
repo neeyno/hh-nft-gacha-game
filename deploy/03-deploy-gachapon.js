@@ -26,7 +26,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
         // Fund subscription using the mock
         await vrfCoordinatorV2mock.fundSubscription(subscriptionId, FUND_AMOUNT)
-        log("subscription funded!")
     } else {
         vrfCoordinatorV2address = networkConfig[chainId]["vrfCoordinatorV2"]
         subscriptionId = networkConfig[chainId]["subscriptionId"]
@@ -34,6 +33,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
     const gachaArgs = [
         nftAddress,
+        networkConfig[chainId]["nftSupply"],
         vrfCoordinatorV2address,
         subscriptionId,
         networkConfig[chainId]["gasLane"],
@@ -51,7 +51,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     if (developmentChains.includes(network.name)) {
         log("adding consumer...")
         await vrfCoordinatorV2mock.addConsumer(subscriptionId.toNumber(), gacha.address)
-        log("consumer added!")
     }
 
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
