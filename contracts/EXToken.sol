@@ -10,9 +10,9 @@ contract ExoticToken is ERC20 {
     }
 
     // к примеру
-    function approve(address любойАддрессСТокенами, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
-        _approve(любойАддрессСТокенами, spender, amount);
+        _approve(owner, spender, amount);
         return true;
     }
 }

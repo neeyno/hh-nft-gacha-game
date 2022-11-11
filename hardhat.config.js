@@ -46,6 +46,7 @@ module.exports = {
         },
         hardhat: {
             chainId: 31337,
+            blockGasLimit: 60000000,
             blockConfirmations: 1,
         },
         localhost: {
@@ -65,7 +66,6 @@ module.exports = {
     etherscan: {
         // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
         apiKey: {
-            rinkeby: ETHERSCAN_API_KEY,
             goerli: ETHERSCAN_API_KEY,
         },
     },

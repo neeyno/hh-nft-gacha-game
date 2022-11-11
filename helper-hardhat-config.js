@@ -2,14 +2,6 @@ const { ethers } = require("hardhat")
 require("dotenv").config()
 
 const networkConfig = {
-    4: {
-        name: "rinkeby",
-        tokenSupply: "102000000000000000000000", //102000 * 10e18,
-        vrfCoordinatorV2: "",
-        subscriptionId: "",
-        gasLane: "",
-        callbackGasLimit: "",
-    },
     5: {
         name: "goerli",
         //tokenSupply: "102000000000000000000000", //102000 * 10e18,
@@ -22,7 +14,7 @@ const networkConfig = {
     31337: {
         name: "hardhat",
         //tokenSupply: "102000000000000000000000", //102000 * 10e18,
-        nftSupply: [8, 5, 3],
+        nftSupply: [12, 5, 3],
         gasLane: "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
         callbackGasLimit: "500000",
     },

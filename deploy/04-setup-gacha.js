@@ -6,26 +6,35 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
 
-    const tokenSupply = ethers.utils.parseEther("35800")
+    //const tokenSupply = ethers.utils.parseEther("35800")
+    const nftValue = [100, 1000, 10000]
     const nftSupply = networkConfig[chainId]["nftSupply"]
+    let supply = 0
+    nftValue.forEach((value, i) => {
+        supply += value * nftSupply[i]
+    })
+    const tokenSupply = ethers.utils.parseUnits(supply.toString(), 18)
 
     const nft = await ethers.getContract("GachaNFT", deployer)
     const token = await ethers.getContract("ExoticToken", deployer)
     const gacha = await ethers.getContract("Gachapon", deployer)
 
-    await token.transfer(gacha.address, tokenSupply)
+    await token.transfer(nft.address, tokenSupply)
 
     for (let id = 0; id < nftSupply.length; id++) {
         await nft.safeTransferFrom(deployer, gacha.address, id, nftSupply[id], "0x")
     }
 
-    const tokenBalance = await token.balanceOf(gacha.address)
+    const tokenBalance = await token.balanceOf(nft.address)
 
     let nftBalance = []
     for (let id = 0; id < nftSupply.length; id++) {
         const idBalance = await nft.balanceOf(gacha.address, id)
         nftBalance.push(idBalance.toString())
     }
-    console.log(`Gacha tokens: ${ethers.utils.formatUnits(tokenBalance, 18)}`)
-    console.log(`Gacha nfs: ${nftBalance}`)
+
+    log(`NFT token balance: ${ethers.utils.formatUnits(tokenBalance, 18)}`)
+    log(`Gacha nfts amount: ${nftBalance}`)
+
+    log("------------------------------------------")
 }

@@ -8,7 +8,7 @@ const INITIAL_TOKEN_LIQUIDITY = networkConfig[chainId]["initTokenLiquidity"]
 
 !developmentChains.includes(network.name)
     ? describe.skip
-    : describe("Gacha unit test", async function () {
+    : describe("Gacha unit test", function () {
           let token, nft, gacha, deployer, player
 
           before(async () => {
@@ -22,5 +22,11 @@ const INITIAL_TOKEN_LIQUIDITY = networkConfig[chainId]["initTokenLiquidity"]
               nft = await ethers.getContract("GachaNFT", deployer)
               token = await ethers.getContract("ExoticToken", deployer)
               gacha = await ethers.getContract("Gachapon", deployer)
+          })
+
+          describe("play", function () {
+              it("should be playable", async () => {
+                  const tx = await gacha.pull()
+              })
           })
       })

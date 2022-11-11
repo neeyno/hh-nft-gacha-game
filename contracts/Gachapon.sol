@@ -21,7 +21,7 @@ error Gachapon__ItemsOutOfStock();
  * @dev This implements Chainlink VRF v2
  */
 contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
-    //Chainlink VRF variables
+    /* Chainlink VRF variables */
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
     uint32 private immutable callbackGasLimit;
@@ -30,25 +30,18 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     VRFCoordinatorV2Interface private immutable vrfCoordinator;
 
     /* Gacha variables */
-    uint256 private constant PULL_FEE = 50;
+
+    uint256 private constant PULL_COST = 50;
     IERC1155 private immutable nft;
     uint256 private _cumulativeSum;
     uint256[] private _chanceArray = [8, 5, 3];
     mapping(address => uint256) private _senderToBlock;
     mapping(uint256 => address) private _requestIdToSender;
-    //uint256 private pullCounter = 16; // or 0
 
     /* EVENTS */
+
     event PullRequest(uint256 requestId, address sender);
     event ItemTransfer(uint256 itemType, address owner);
-
-    // modifier inStock() {
-    //     if (pullCounter == 0) {
-    //         revert Gachapon__ItemsOutOfStock();
-    //     }
-    //     _;
-    //     pullCounter = pullCounter - 1;
-    // }
 
     /* FUNCTIONS */
 
@@ -77,8 +70,9 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     }
 
     function pull() external returns (uint256 requestId) {
-        uint256 energyBlock = _getEnergyBlock(msg.sender); // = senderToBlock[msg.sender];
-        _senderToBlock[msg.sender] = energyBlock;
+        address msgSender = _msgSender();
+        uint256 energyBlock = _getEnergyBlock(msgSender); // = senderToBlock[msg.sender];
+        _senderToBlock[msgSender] = energyBlock;
 
         requestId = vrfCoordinator.requestRandomWords(
             gasLane,
@@ -88,8 +82,8 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
             NUM_WORDS
         );
 
-        _requestIdToSender[requestId] = msg.sender;
-        emit PullRequest(requestId, msg.sender);
+        _requestIdToSender[requestId] = msgSender;
+        emit PullRequest(requestId, msgSender);
     }
 
     // function fulfill() public {
@@ -145,32 +139,25 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     function _getEnergyBlock(address user) private view returns (uint256) {
         uint256 prevEnergy = _senderToBlock[user];
         if (prevEnergy == 0) {
-            prevEnergy = block.number - PULL_FEE; // 1passed pull + 1 free pull
+            prevEnergy = block.number; // 1 free pull
             return prevEnergy;
         } else {
             uint256 energy = block.number - prevEnergy;
-            if (energy < PULL_FEE) {
+            if (energy < PULL_COST) {
                 revert Gachapon__InsufficientEnergy();
             }
-            energy = energy > PULL_FEE * 5 ? PULL_FEE * 4 : energy - PULL_FEE; // limit is PULL_FEE * 5
+            energy = energy > PULL_COST * 5 ? PULL_COST * 4 : energy - PULL_COST; // limit is PULL_COST * 5
             return block.number - energy;
         }
     }
 
-    /* Getter FUNCTIONS */
+    function _msgSender() private view returns (address) {
+        return msg.sender;
+    }
+
+    /* Getters FUNCTION */
 
     function getChanceArray() external view returns (uint256[] memory) {
         return _chanceArray;
     }
-
-    // function getPullCounter() public view returns (uint256 _pullCounter) {
-    //     uint256[3] memory _chanceArray = chanceArray;
-    //     uint256 len = _chanceArray.length;
-    //     for (uint256 i; i < len; ) {
-    //         _pullCounter = _chanceArray[i];
-    //         unchecked {
-    //             ++i;
-    //         }
-    //     }
-    // }
 }
