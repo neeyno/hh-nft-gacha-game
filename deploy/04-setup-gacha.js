@@ -33,8 +33,10 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         nftBalance.push(idBalance.toString())
     }
 
-    log(`NFT token balance: ${ethers.utils.formatUnits(tokenBalance, 18)}`)
+    log(`Gacha token balance: ${ethers.utils.formatUnits(tokenBalance, 18)}`)
     log(`Gacha nfts amount: ${nftBalance}`)
 
     log("------------------------------------------")
 }
+
+module.exports.tags = ["setup"]

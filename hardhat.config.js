@@ -41,6 +41,7 @@ module.exports = {
         goerli: {
             url: GOERLI_RPC_URL,
             accounts: [PRIVATE_KEY],
+            saveDeployments: true,
             chainId: 5,
             blockConfirmations: 6,
         },
@@ -51,6 +52,10 @@ module.exports = {
         },
         localhost: {
             url: "http://127.0.0.1:8545/",
+            // mining: {
+            //     auto: true,
+            //     interval: 1000,
+            // },
             chainId: 31337,
             blockConfirmations: 1,
         },

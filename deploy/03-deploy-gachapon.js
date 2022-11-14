@@ -2,7 +2,7 @@ const { network } = require("hardhat")
 const { developmentChains, networkConfig } = require("../helper-hardhat-config")
 const { verify } = require("../utils/verify")
 
-const FUND_AMOUNT = "1000000000000000000000" // 1000 * 10e18
+const FUND_AMOUNT = "1000000000000000000000" // 1000 * 1e18
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deploy, log, get } = deployments
@@ -25,7 +25,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         subscriptionId = txReceipt.events[0].args.subId
 
         // Fund subscription using the mock
-        await vrfCoordinatorV2mock.fundSubscription(subscriptionId, FUND_AMOUNT)
+        await vrfCoordinatorV2mock.fundSubscription(subscriptionId.toNumber(), FUND_AMOUNT)
     } else {
         vrfCoordinatorV2address = networkConfig[chainId]["vrfCoordinatorV2"]
         subscriptionId = networkConfig[chainId]["subscriptionId"]

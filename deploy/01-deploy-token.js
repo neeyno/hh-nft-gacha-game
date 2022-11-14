@@ -14,9 +14,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     nftValue.forEach((value, i) => {
         supply += value * nftSupply[i]
     })
-    console.log(supply.toString())
+
     const tokenSupply = ethers.utils.parseUnits(supply.toString(), 18)
-    console.log(tokenSupply.toString())
+    log(`Token supply ${ethers.utils.formatUnits(tokenSupply.toString(), 18)}`)
 
     const tokenArgs = [tokenSupply]
     const token = await deploy("ExoticToken", {
