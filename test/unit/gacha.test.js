@@ -26,30 +26,81 @@ const INITIAL_TOKEN_LIQUIDITY = networkConfig[chainId]["initTokenLiquidity"]
           })
 
           describe("Contructor", function () {
-              it("initializes the gacha correctly", async function () {})
+              it("should set nft contract address", async function () {
+                  const nftAddress = await gacha.getNftAddress()
+                  assert.equal(nftAddress, nft.address)
+              })
+
+              it("should set VRFCoordinatorV2 address", async function () {
+                  const vrfAddress = await gacha.getVrfCoordinator()
+                  assert.equal(vrfAddress, vrfCoordinatorV2Mock.address)
+              })
+
+              it("initializes with given chance array", async function () {
+                  const expectedChances = networkConfig[chainId]["nftSupply"]
+                  let expectedMaxChanceValue = 0
+                  expectedChances.forEach((value) => (expectedMaxChanceValue += value))
+
+                  const actualChances = await gacha.getChanceArray()
+                  const actualMaxChanceVal = await gacha.getMaxChance()
+
+                  assert.equal(actualMaxChanceVal.toString(), expectedMaxChanceValue.toString())
+                  assert.equal(actualChances.toString(), expectedChances.toString())
+              })
           })
 
-          describe("play", function () {
-              it("should be playable", async () => {
+          describe("Single pull", function () {
+              //it("should be playable", async () => {})
+
+              it("records player when they pull", async () => {
+                  const txRes = await gacha.connect(player).pullSingle()
+                  const txReceipt = await txRes.wait(1)
+                  const { requestId, sender } = txReceipt.events[1].args
+
+                  const contractPlayer = await gacha.getUserByRequest(requestId)
+
+                  assert.equal(contractPlayer, player.address)
+                  assert.equal(sender, player.address)
+              })
+
+              it("emits event on pull", async () => {
+                  await expect(gacha.connect(player).pullSingle()).to.emit(gacha, "PullRequest")
+              })
+          })
+
+          describe("fulfillRandomWords", function () {
+              it("fulfills single pull request", async () => {
                   //   await network.provider.send("evm_increaseTime", [])
                   //   await network.provider.send("evm_mine", [])
 
-                  //const userEng = await gacha.getUserEnergy(deployer.address)
-                  //assert.equal(userEng.toString(), "1")
-
-                  const tx = await gacha.connect(deployer).pull()
+                  const tx = await gacha.connect(player).pullSingle()
                   const txReceipt = await tx.wait(1)
                   const requestId = txReceipt.events[1].args.requestId
-                  console.log(requestId)
+
+                  //   const filter = {
+                  //       address: nft.address,
+                  //       topics: [
+                  //           ethers.utils.id(
+                  //               "TransferSingle(address,address,address,uint256,uint256)"
+                  //           ),
+                  //           gacha.address,
+                  //       ],
+                  //   }
+                  const filter = nft.filters.TransferSingle(gacha.address)
 
                   await new Promise(async (resolve, reject) => {
-                      gacha.once("ItemTransfer", async () => {
-                          console.log("found the event...")
+                      nft.once(filter, async (operator, from, to, id, value) => {
+                          console.log("...")
                           try {
-                              const bal0 = await nft.balanceOf(deployer.address, 0)
-                              const bal1 = await nft.balanceOf(deployer.address, 1)
-                              const bal2 = await nft.balanceOf(deployer.address, 2)
-                              console.log(bal0.toString(), bal1.toString(), bal2.toString())
+                              //console.log(operator, from, to, id, value)
+                              const playerBalance = await nft.balanceOf(player.address, id)
+
+                              assert.equal(operator, gacha.address)
+                              assert.equal(from, gacha.address)
+                              assert.equal(to, player.address)
+                              assert.equal(value.toString(), "1")
+                              assert.equal(playerBalance.toString(), "1")
+
                               resolve()
                           } catch (error) {
                               console.log(error)

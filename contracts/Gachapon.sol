@@ -15,50 +15,53 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
  * @dev This implements Chainlink VRF v2
  */
 contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
-    /* ERRORS */
+    //
+    /* -- ERRORS -- */
 
     error Gachapon__RngOutOfRange();
     error Gachapon__InsufficientEnergy();
     error Gachapon__ItemsOutOfStock();
 
-    /* Chainlink VRF variables */
+    /* -- Chainlink VRF variables -- */
+
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
-    uint32 private immutable callbackGasLimit;
-    uint64 private immutable subscriptionId;
-    bytes32 private immutable gasLane;
-    VRFCoordinatorV2Interface private immutable vrfCoordinator;
+    uint32 private immutable i_callbackGasLimit;
+    uint64 private immutable i_subscriptionId;
+    bytes32 private immutable i_gasLane;
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
 
-    /* Gacha variables */
+    /* -- Gacha variables -- */
 
     uint256 private constant PULL_COST = 50;
-    IERC1155 private immutable nft;
-    uint256 private _cumulativeSum;
+    IERC1155 private _nft;
+    uint256 private _maxChanceValue;
     uint256[] private _chanceArray; // = [8, 5, 3];
     mapping(address => uint256) private _senderToBlock;
     mapping(uint256 => address) private _requestIdToSender;
 
-    /* EVENTS */
+    /* -- EVENTS -- */
 
     event PullRequest(uint256 requestId, address sender);
-    event ItemTransfer(uint256 itemType, address owner);
 
-    /* FUNCTIONS */
+    //event ItemTransfer(uint256 itemType, address owner);
+
+    /* -- FUNCTIONS -- */
 
     constructor(
-        address _nftAddress,
+        address nftAddress,
         uint256[] memory chanceArray,
-        address _vrfCoordinatorV2,
-        uint64 _subscriptionId,
-        bytes32 _gasLane, // keyHash
-        uint32 _callbackGasLimit
-    ) VRFConsumerBaseV2(_vrfCoordinatorV2) {
-        nft = IERC1155(_nftAddress);
+        address vrfCoordinatorV2,
+        uint64 subscriptionId,
+        bytes32 gasLane, // keyHash
+        uint32 callbackGasLimit
+    ) VRFConsumerBaseV2(vrfCoordinatorV2) {
+        _nft = IERC1155(nftAddress);
         _chanceArray = chanceArray;
-        vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinatorV2);
-        subscriptionId = _subscriptionId;
-        gasLane = _gasLane;
-        callbackGasLimit = _callbackGasLimit;
+        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
+        i_subscriptionId = subscriptionId;
+        i_gasLane = gasLane;
+        i_callbackGasLimit = callbackGasLimit;
         uint256 sum;
         for (uint256 i = 0; i < chanceArray.length; ) {
             sum += chanceArray[i];
@@ -66,40 +69,30 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
                 ++i;
             }
         }
-        _cumulativeSum = sum;
+        _maxChanceValue = sum;
     }
 
-    function pull() external returns (uint256 requestId) {
-        address msgSender = _msgSender();
-        uint256 energyBlock = _getEnergyBlock(msgSender); // = senderToBlock[msg.sender];
-        _senderToBlock[msgSender] = energyBlock;
+    function pullSingle() external returns (uint256 requestId) {
+        address sender = _msgSender();
+        //_senderToBlock[sender] = _getEnergyBlock(_senderToBlock[sender], block.number); //energyBlock;
 
-        requestId = vrfCoordinator.requestRandomWords(
-            gasLane,
-            subscriptionId,
+        requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
             REQUEST_CONFIRMATIONS,
-            callbackGasLimit,
+            i_callbackGasLimit,
             NUM_WORDS
         );
-
-        _requestIdToSender[requestId] = msgSender;
-        emit PullRequest(requestId, msgSender);
+        _requestIdToSender[requestId] = sender;
+        emit PullRequest(requestId, sender);
     }
-
-    // function fulfill() public {
-    //     address owner = msg.sender;
-    //     uint8 rng = 255 % chanceArray[2];
-    //     uint8 itemType = getKeyFromRNG(rng);
-    //     chanceArray[itemType] -= 1;
-    //     nft.safeTransferFrom(address(this), owner, itemType, 1, "");
-    // }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         address owner = _requestIdToSender[requestId];
-        uint256 rng = 1 + (randomWords[0] % _cumulativeSum);
-        uint256 itemType = _getTypeFromRNG(rng, _chanceArray, _cumulativeSum);
-        nft.safeTransferFrom(address(this), owner, itemType, 1, "0x");
-        emit ItemTransfer(itemType, owner);
+        //uint256 rng = 1 + (randomWords[0] % _maxChanceValue);
+        uint256 itemType = _getTypeFromRNG(randomWords[0], _chanceArray, _maxChanceValue);
+        _nft.safeTransferFrom(address(this), owner, itemType, 1, "0x");
+        //emit ItemTransfer(itemType, owner);
     }
 
     // function getKeyFromRNG(uint256 rng) public view returns (uint256) {
@@ -118,18 +111,18 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     // }
 
     function _getTypeFromRNG(
-        uint256 rng,
+        uint256 randomNum,
         uint256[] memory chanceArray,
-        uint256 cumulativeSum
+        uint256 maxChanceValue
     ) private pure returns (uint256) {
         // uint256[] memory chanceArray = _chanceArray;
         // uint256 cumulativeSum = _cumulativeSum;
-        uint256 i = 0;
-        for (; i < chanceArray.length; ) {
-            if (rng <= cumulativeSum && rng > cumulativeSum - chanceArray[i]) {
+        uint256 rng = 1 + (randomNum % maxChanceValue);
+        for (uint256 i = 0; i < chanceArray.length; ) {
+            if (rng <= maxChanceValue && rng > maxChanceValue - chanceArray[i]) {
                 return i;
             }
-            cumulativeSum = cumulativeSum - chanceArray[i];
+            maxChanceValue = maxChanceValue - chanceArray[i];
             unchecked {
                 ++i;
             }
@@ -137,18 +130,18 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         revert Gachapon__RngOutOfRange();
     }
 
-    function _getEnergyBlock(address user) private view returns (uint256) {
-        uint256 prevEnergy = _senderToBlock[user];
+    function _getEnergyBlock(uint256 prevEnergy, uint256 blockNum) private pure returns (uint256) {
         if (prevEnergy == 0) {
-            prevEnergy = block.number; // 1 free pull
-            return prevEnergy;
+            //prevEnergy = block.number; // 1 free pull
+            //return block.number;
+            return blockNum;
         } else {
-            uint256 energy = block.number - prevEnergy;
+            uint256 energy = blockNum - prevEnergy;
             if (energy < PULL_COST) {
                 revert Gachapon__InsufficientEnergy();
             }
             energy = energy > PULL_COST * 5 ? PULL_COST * 4 : energy - PULL_COST; // limit is PULL_COST * 5
-            return block.number - energy;
+            return blockNum - energy;
         }
     }
 
@@ -156,13 +149,29 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         return msg.sender;
     }
 
-    /* Getters FUNCTION */
+    /* -- Getter FUNCTIONS -- */
 
     function getChanceArray() external view returns (uint256[] memory) {
         return _chanceArray;
     }
 
+    function getMaxChance() external view returns (uint256) {
+        return _maxChanceValue;
+    }
+
+    function getUserByRequest(uint256 requestId) external view returns (address) {
+        return _requestIdToSender[requestId];
+    }
+
     function getUserEnergy(address user) external view returns (uint256) {
         return _senderToBlock[user];
+    }
+
+    function getNftAddress() external view returns (IERC1155) {
+        return _nft;
+    }
+
+    function getVrfCoordinator() external view returns (VRFCoordinatorV2Interface) {
+        return i_vrfCoordinator;
     }
 }
