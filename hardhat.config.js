@@ -25,19 +25,13 @@ module.exports = {
         version: "0.8.13",
         settings: {
             optimizer: {
-                enabled: false,
+                enabled: true,
                 runs: 200,
             },
         },
     },
     defaultNetwork: "hardhat",
     networks: {
-        rinkeby: {
-            url: RINKEBY_RPC_URL,
-            accounts: [PRIVATE_KEY],
-            chainId: 4,
-            blockConfirmations: 6,
-        },
         goerli: {
             url: GOERLI_RPC_URL,
             accounts: [PRIVATE_KEY],
@@ -47,7 +41,7 @@ module.exports = {
         },
         hardhat: {
             chainId: 31337,
-            blockGasLimit: 60000000,
+            blockGasLimit: 10000000,
             blockConfirmations: 1,
         },
         localhost: {

@@ -53,10 +53,10 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         await vrfCoordinatorV2mock.addConsumer(subscriptionId.toNumber(), gacha.address)
     }
 
-    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-        log("verifying...")
-        await verify(gacha.address, gachaArgs)
-    }
+    // if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+    //     log("verifying...")
+    //     await verify(gacha.address, gachaArgs)
+    // }
 
     log("------------------------------------------")
 }

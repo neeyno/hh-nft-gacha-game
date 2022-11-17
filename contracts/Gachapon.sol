@@ -20,7 +20,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
 
     error Gachapon__RngOutOfRange();
     error Gachapon__InsufficientEnergy();
-    error Gachapon__ItemsOutOfStock();
+    //error Gachapon__ItemsOutOfStock();
 
     /* -- Chainlink VRF variables -- */
 
@@ -36,15 +36,14 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     uint256 private constant PULL_COST = 50;
     IERC1155 private _nft;
     uint256 private _maxChanceValue;
-    uint256[] private _chanceArray; // = [8, 5, 3];
+    uint256[] private _chanceArray;
     mapping(address => uint256) private _senderToBlock;
     mapping(uint256 => address) private _requestIdToSender;
 
     /* -- EVENTS -- */
 
-    event PullRequest(uint256 requestId, address sender);
-
-    //event ItemTransfer(uint256 itemType, address owner);
+    event PullRequested(uint256 indexed requestId, address indexed sender);
+    event PullFulfilled(uint256 indexed requestId, address indexed owner, uint256 nftId);
 
     /* -- FUNCTIONS -- */
 
@@ -84,15 +83,14 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
             NUM_WORDS
         );
         _requestIdToSender[requestId] = sender;
-        emit PullRequest(requestId, sender);
+        emit PullRequested(requestId, sender);
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         address owner = _requestIdToSender[requestId];
-        //uint256 rng = 1 + (randomWords[0] % _maxChanceValue);
-        uint256 itemType = _getTypeFromRNG(randomWords[0], _chanceArray, _maxChanceValue);
-        _nft.safeTransferFrom(address(this), owner, itemType, 1, "0x");
-        //emit ItemTransfer(itemType, owner);
+        uint256 nftId = _getIdFromRNG(randomWords[0], _chanceArray, _maxChanceValue);
+        _nft.safeTransferFrom(address(this), owner, nftId, 1, "0x");
+        emit PullFulfilled(requestId, owner, nftId);
     }
 
     // function getKeyFromRNG(uint256 rng) public view returns (uint256) {
@@ -110,14 +108,16 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     //     revert Gachapon__RNGOutOfRange();
     // }
 
-    function _getTypeFromRNG(
+    function _getIdFromRNG(
         uint256 randomNum,
         uint256[] memory chanceArray,
         uint256 maxChanceValue
     ) private pure returns (uint256) {
         // uint256[] memory chanceArray = _chanceArray;
         // uint256 cumulativeSum = _cumulativeSum;
-        uint256 rng = 1 + (randomNum % maxChanceValue);
+
+        // transform the result to a number between 1 and maxChanceValue inclusively
+        uint256 rng = (randomNum % maxChanceValue) + 1;
         for (uint256 i = 0; i < chanceArray.length; ) {
             if (rng <= maxChanceValue && rng > maxChanceValue - chanceArray[i]) {
                 return i;
@@ -131,6 +131,8 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     }
 
     function _getEnergyBlock(uint256 prevEnergy, uint256 blockNum) private pure returns (uint256) {
+        // not implemented
+
         if (prevEnergy == 0) {
             //prevEnergy = block.number; // 1 free pull
             //return block.number;
@@ -140,7 +142,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
             if (energy < PULL_COST) {
                 revert Gachapon__InsufficientEnergy();
             }
-            energy = energy > PULL_COST * 5 ? PULL_COST * 4 : energy - PULL_COST; // limit is PULL_COST * 5
+            energy = energy > PULL_COST * 5 ? PULL_COST * 4 : energy - PULL_COST; // limit of the energy
             return blockNum - energy;
         }
     }
@@ -163,9 +165,9 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         return _requestIdToSender[requestId];
     }
 
-    function getUserEnergy(address user) external view returns (uint256) {
-        return _senderToBlock[user];
-    }
+    // function getUserEnergy(address user) external view returns (uint256) {
+    //     return _senderToBlock[user];
+    // }
 
     function getNftAddress() external view returns (IERC1155) {
         return _nft;
