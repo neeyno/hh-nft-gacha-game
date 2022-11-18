@@ -13,7 +13,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     nftValue.forEach((value, i) => {
         supply += value * nftSupply[i]
     })
-    //const tokenSupply = ethers.utils.parseUnits(supply.toString(), 18)
+    const tokenSupply = ethers.utils.parseUnits(supply.toString(), 18)
 
     const nft = await ethers.getContract("GachaNFT", deployer)
     //const token = await ethers.getContract("ExoticToken", deployer)
@@ -21,14 +21,14 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
     //await token.transfer(nft.address, tokenSupply)
 
-    for (let id = 0; id < nftSupply.length; id++) {
+    for (let id = 0; id < nftSupply.length - 1; id++) {
         await nft.safeTransferFrom(deployer, gacha.address, id, nftSupply[id], "0x")
     }
 
     //const tokenBalance = await token.balanceOf(nft.address)
 
     let nftBalance = []
-    for (let id = 0; id < nftSupply.length; id++) {
+    for (let id = 0; id < nftSupply.length - 1; id++) {
         const idBalance = await nft.balanceOf(gacha.address, id)
         nftBalance.push(idBalance.toString())
     }

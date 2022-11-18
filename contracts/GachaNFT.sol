@@ -13,7 +13,6 @@ contract GachaNFT is ERC1155URIStorage {
     uint256 private constant LEGENDARY = 2;
     string[3] private imageURI;
     string[3] private name = ["COMMON", "EPIC", "LEGENDARY"];
-    //uint256[3] private rarity = [220, 30, 5];
     uint256[3] private rarity;
     uint256[3] private tokenValue = [100, 1000, 10000];
 
@@ -32,7 +31,7 @@ contract GachaNFT is ERC1155URIStorage {
     //     return true;
     // }
 
-    function uri(uint256 id) public view virtual override returns (string memory) {
+    function uri(uint256 id) public view override returns (string memory) {
         return
             string(
                 abi.encodePacked(

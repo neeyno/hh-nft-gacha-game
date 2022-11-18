@@ -7,18 +7,24 @@ require("hardhat-gas-reporter")
 require("solidity-coverage")
 //require("hardhat-contract-sizer")
 
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
+const MAINNET_RPC_URL =
+    `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}` ||
+    "https://eth-mainnet.alchemyapi.io/v2/your-api-key"
 
-const RINKEBY_RPC_URL = process.env.ALCHEMY_RINKEBY_URL || "https://eth-rinkeby/example..."
 const GOERLI_RPC_URL = process.env.ALCHEMY_GOERLI_URL || "https://eth-goerli/example..."
+const MUMBAI_RPC_URL = process.env.ALCHEMY_MUMBAI_URL
+
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "other_key"
+const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY
+
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x141..."
 // optional
 //const MNEMONIC = process.env.MNEMONIC
 
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "other key"
-const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || "other key"
+/**
+ * @type import('hardhat/config').HardhatUserConfig
+ */
 
 module.exports = {
     solidity: {
@@ -32,24 +38,35 @@ module.exports = {
     },
     defaultNetwork: "hardhat",
     networks: {
+        mainnet: {
+            url: MAINNET_RPC_URL,
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            //   accounts: {
+            //     mnemonic: MNEMONIC,
+            //   },
+            chainId: 1,
+        },
+        mumbai: {
+            url: MUMBAI_RPC_URL,
+            accounts: [PRIVATE_KEY],
+            saveDeployments: true,
+            chainId: 80001,
+            blockConfirmations: 3,
+        },
         goerli: {
             url: GOERLI_RPC_URL,
             accounts: [PRIVATE_KEY],
             saveDeployments: true,
             chainId: 5,
-            blockConfirmations: 6,
+            blockConfirmations: 3,
         },
         hardhat: {
             chainId: 31337,
-            blockGasLimit: 10000000,
+            blockGasLimit: 12450000,
             blockConfirmations: 1,
         },
         localhost: {
             url: "http://127.0.0.1:8545/",
-            // mining: {
-            //     auto: true,
-            //     interval: 1000,
-            // },
             chainId: 31337,
             blockConfirmations: 1,
         },
@@ -66,6 +83,9 @@ module.exports = {
         // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
         apiKey: {
             goerli: ETHERSCAN_API_KEY,
+            mainnet: ETHERSCAN_API_KEY,
+            polygon: POLYGONSCAN_API_KEY,
+            mumbai: POLYGONSCAN_API_KEY,
         },
     },
     gasReporter: {

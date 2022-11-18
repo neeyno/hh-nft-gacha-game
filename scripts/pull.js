@@ -3,6 +3,7 @@ const { ethers } = require("hardhat")
 async function pullSingle() {
     const accounts = await ethers.getSigners()
     deployer = accounts[0]
+
     const gacha = await ethers.getContract("Gachapon")
     const nft = await ethers.getContract("GachaNFT")
 
@@ -11,7 +12,7 @@ async function pullSingle() {
         gacha.once("PullFulfilled", async (requestId, owner, nftId) => {
             try {
                 console.log("PullFulfilled!")
-                console.table([requestId, owner, nftId])
+                console.log([requestId, owner, nftId])
                 const playerBalance = await nft.balanceOf(owner, nftId)
                 console.log(`Balance: ${playerBalance.toString()}`)
 

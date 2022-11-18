@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// ver 1.1
+// ver 1.12
 pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -34,11 +34,10 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     /* -- Gacha variables -- */
 
     uint256 private constant PULL_COST = 50;
-    IERC1155 private _nft;
-    uint256 private _maxChanceValue;
     uint256[] private _chanceArray;
     mapping(address => uint256) private _senderToBlock;
     mapping(uint256 => address) private _requestIdToSender;
+    IERC1155 private _nft;
 
     /* -- EVENTS -- */
 
@@ -61,14 +60,6 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         i_subscriptionId = subscriptionId;
         i_gasLane = gasLane;
         i_callbackGasLimit = callbackGasLimit;
-        uint256 sum;
-        for (uint256 i = 0; i < chanceArray.length; ) {
-            sum += chanceArray[i];
-            unchecked {
-                ++i;
-            }
-        }
-        _maxChanceValue = sum;
     }
 
     function pullSingle() external returns (uint256 requestId) {
@@ -88,41 +79,28 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         address owner = _requestIdToSender[requestId];
-        uint256 nftId = _getIdFromRNG(randomWords[0], _chanceArray, _maxChanceValue);
-        _nft.safeTransferFrom(address(this), owner, nftId, 1, "0x");
+        uint256 nftId = _getIdFromRNG(randomWords[0], _chanceArray); // _maxChanceValue);
+        _nft.safeTransferFrom(address(this), owner, nftId, 1, "");
         emit PullFulfilled(requestId, owner, nftId);
     }
 
-    // function getKeyFromRNG(uint256 rng) public view returns (uint256) {
-    //     uint8 cumulativeSum = 0;
-    //     uint8[3] memory _chanceArray = chanceArray;
-    //     for (uint8 i; i < _chanceArray.length; ) {
-    //         if (rng > cumulativeSum && rng <= cumulativeSum + _chanceArray[i]) {
-    //             return i;
-    //         }
-    //         cumulativeSum = cumulativeSum + _chanceArray[i];
-    //         unchecked {
-    //             ++i;
-    //         }
-    //     }
-    //     revert Gachapon__RNGOutOfRange();
-    // }
+    function setNft(address nftAddress, uint256[] memory chanceArray) external {
+        _nft = IERC1155(nftAddress);
+        _chanceArray = chanceArray;
+    }
 
-    function _getIdFromRNG(
-        uint256 randomNum,
-        uint256[] memory chanceArray,
-        uint256 maxChanceValue
-    ) private pure returns (uint256) {
-        // uint256[] memory chanceArray = _chanceArray;
-        // uint256 cumulativeSum = _cumulativeSum;
-
+    function _getIdFromRNG(uint256 randomNum, uint256[] memory chanceArray)
+        private
+        pure
+        returns (uint256)
+    {
         // transform the result to a number between 1 and maxChanceValue inclusively
-        uint256 rng = (randomNum % maxChanceValue) + 1;
-        for (uint256 i = 0; i < chanceArray.length; ) {
-            if (rng <= maxChanceValue && rng > maxChanceValue - chanceArray[i]) {
+        uint256 rng = (randomNum % chanceArray[0]) + 1;
+        uint256 len = chanceArray.length - 1;
+        for (uint256 i = 0; i < len; ) {
+            if (rng <= chanceArray[i] && rng > chanceArray[i + 1]) {
                 return i;
             }
-            maxChanceValue = maxChanceValue - chanceArray[i];
             unchecked {
                 ++i;
             }
@@ -134,8 +112,6 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         // not implemented
 
         if (prevEnergy == 0) {
-            //prevEnergy = block.number; // 1 free pull
-            //return block.number;
             return blockNum;
         } else {
             uint256 energy = blockNum - prevEnergy;
@@ -155,10 +131,6 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
 
     function getChanceArray() external view returns (uint256[] memory) {
         return _chanceArray;
-    }
-
-    function getMaxChance() external view returns (uint256) {
-        return _maxChanceValue;
     }
 
     function getUserByRequest(uint256 requestId) external view returns (address) {

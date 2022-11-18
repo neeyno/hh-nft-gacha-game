@@ -39,13 +39,12 @@ const chainId = network.config.chainId
 
               it("initializes with given chance array", async function () {
                   const expectedChances = networkConfig[chainId]["nftSupply"]
-                  let expectedMaxChanceValue = 0
-                  expectedChances.forEach((value) => (expectedMaxChanceValue += value))
+                  //expectedChances.forEach((value) => (expectedMaxChanceValue += value))
 
                   const actualChances = await gacha.getChanceArray()
-                  const actualMaxChanceVal = await gacha.getMaxChance()
+                  //const actualMaxChanceVal = await gacha.getMaxChance()
 
-                  assert.equal(actualMaxChanceVal.toString(), expectedMaxChanceValue.toString())
+                  //assert.equal(actualMaxChanceVal.toString(), expectedMaxChanceValue.toString())
                   assert.equal(actualChances.toString(), expectedChances.toString())
               })
           })

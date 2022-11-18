@@ -40,7 +40,8 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     }
     // await storeImages(imagesLocation)
 
-    const rarity = networkConfig[chainId]["nftSupply"]
+    const nftSupply = networkConfig[chainId]["nftSupply"]
+    const rarity = nftSupply.slice(0, -1)
     const nftArgs = [imageURI, rarity]
 
     const nft = await deploy("GachaNFT", {
