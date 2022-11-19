@@ -12,7 +12,7 @@ async function pullSingle() {
         gacha.once("PullFulfilled", async (requestId, owner, nftId) => {
             try {
                 console.log("PullFulfilled!")
-                console.log([requestId, owner, nftId])
+                console.log([requestId.toString(), owner, nftId.toString()])
                 const playerBalance = await nft.balanceOf(owner, nftId)
                 console.log(`Balance: ${playerBalance.toString()}`)
 

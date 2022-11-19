@@ -13,12 +13,14 @@ const MAINNET_RPC_URL =
 
 const GOERLI_RPC_URL = process.env.ALCHEMY_GOERLI_URL || "https://eth-goerli/example..."
 const MUMBAI_RPC_URL = process.env.ALCHEMY_MUMBAI_URL
+const BNBTEST_RPC_URL = "https://data-seed-prebsc-1-s1.binance.org:8545"
 
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "other_key"
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY
+const BSCSCAN_API_KEY = process.env.BSCSCAN_API_KEY
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x141..."
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x141a...3x57a"
 // optional
 //const MNEMONIC = process.env.MNEMONIC
 
@@ -46,18 +48,25 @@ module.exports = {
             //   },
             chainId: 1,
         },
-        mumbai: {
-            url: MUMBAI_RPC_URL,
-            accounts: [PRIVATE_KEY],
-            saveDeployments: true,
-            chainId: 80001,
-            blockConfirmations: 3,
-        },
         goerli: {
             url: GOERLI_RPC_URL,
-            accounts: [PRIVATE_KEY],
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
             saveDeployments: true,
             chainId: 5,
+            blockConfirmations: 3,
+        },
+        bnbtest: {
+            url: BNBTEST_RPC_URL,
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
+            chainId: 97,
+            blockConfirmations: 3,
+        },
+        mumbai: {
+            url: MUMBAI_RPC_URL,
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
+            chainId: 80001,
             blockConfirmations: 3,
         },
         hardhat: {
@@ -86,6 +95,7 @@ module.exports = {
             mainnet: ETHERSCAN_API_KEY,
             polygon: POLYGONSCAN_API_KEY,
             mumbai: POLYGONSCAN_API_KEY,
+            bnbtest: BSCSCAN_API_KEY,
         },
     },
     gasReporter: {
@@ -94,6 +104,12 @@ module.exports = {
         noColors: true,
         currency: "USD",
         //coinmarketcap: COINMARKETCAP_API_KEY,
+    },
+    paths: {
+        sources: "./contracts",
+        tests: "./test",
+        cache: "./cache",
+        artifacts: "./artifacts",
     },
     mocha: {
         timeout: 300000, // 1000 = 1sec
