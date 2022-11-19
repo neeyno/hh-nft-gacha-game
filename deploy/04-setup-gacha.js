@@ -24,6 +24,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     for (let id = 0; id < nftSupply.length - 1; id++) {
         await nft.safeTransferFrom(deployer, gacha.address, id, nftSupply[id], "0x")
     }
+    //await nft.safeTransferFrom(deployer, gacha.address, 2, nftSupply[2], "0x")
 
     //const tokenBalance = await token.balanceOf(nft.address)
 
