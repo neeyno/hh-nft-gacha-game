@@ -1,5 +1,5 @@
 const { network } = require("hardhat")
-const { developmentChains, networkConfig } = require("../helper-hardhat-config")
+const { developmentChains, networkConfig, NFT_SUPPLY } = require("../helper-hardhat-config")
 const { verify } = require("../utils/verify")
 const { storeImages } = require("../utils/uploadToPinata")
 
@@ -40,9 +40,9 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     }
     // await storeImages(imagesLocation)
 
-    const nftSupply = networkConfig[chainId]["nftSupply"]
-    const rarity = nftSupply.slice(0, -1)
-    const nftArgs = [imageURI, rarity]
+    // const nftSupply = networkConfig[chainId]["nftSupply"]
+    // const rarity = nftSupply.slice(0, -1)
+    const nftArgs = [imageURI, NFT_SUPPLY]
 
     const nft = await deploy("GachaNFT", {
         contract: "GachaNFT",
