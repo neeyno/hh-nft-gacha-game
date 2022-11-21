@@ -1,5 +1,5 @@
 const { network, ethers } = require("hardhat")
-const { networkConfig } = require("../helper-hardhat-config")
+const { networkConfig, NFT_SUPPLY } = require("../helper-hardhat-config")
 
 async function balance() {
     const accounts = await ethers.getSigners()
@@ -8,15 +8,13 @@ async function balance() {
 
     const gacha = await ethers.getContract("Gachapon")
     const nft = await ethers.getContract("GachaNFT")
-    const nftSupply = networkConfig[chainId]["nftSupply"]
+    //const nftSupply = networkConfig[chainId]["nftSupply"]
 
-    let nftBalance = []
-    for (let id = 0; id < nftSupply.length - 1; id++) {
-        const idBalance = await nft.balanceOf(gacha.address, id)
-        nftBalance.push(idBalance.toString())
-    }
+    const addrArray = [...Array(NFT_SUPPLY.length)].map((_) => gacha.address)
+    const idArray = [...Array(NFT_SUPPLY.length)].map((_, i) => i)
 
-    console.log(`Gacha nft balance: ${nftBalance}`)
+    const gachaNftBalances = await nft.balanceOfBatch(addrArray, idArray)
+    console.log(`Gacha nft balance: ${gachaNftBalances.toString()}`)
 
     console.log("------------------------------------------")
 }

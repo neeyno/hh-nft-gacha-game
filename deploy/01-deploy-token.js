@@ -1,5 +1,5 @@
 const { network, getNamedAccounts, deployments, ethers } = require("hardhat")
-const { developmentChains, networkConfig } = require("../helper-hardhat-config")
+const { developmentChains, networkConfig, NFT_SUPPLY } = require("../helper-hardhat-config")
 const { verify } = require("../utils/verify")
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
@@ -9,7 +9,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     //const tokenSupply = networkConfig[chainId]["tokenSupply"]
     const nftValue = [100, 1000, 10000]
-    const nftSupply = networkConfig[chainId]["nftSupply"]
+    const nftSupply = NFT_SUPPLY
     let supply = 0
     nftValue.forEach((value, i) => {
         supply += value * nftSupply[i]

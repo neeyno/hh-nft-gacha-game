@@ -1,5 +1,5 @@
 const { network } = require("hardhat")
-const { developmentChains, networkConfig } = require("../helper-hardhat-config")
+const { developmentChains, networkConfig, CHANCE_ARRAY } = require("../helper-hardhat-config")
 const { verify } = require("../utils/verify")
 
 const FUND_AMOUNT = "1000000000000000000000" // 1000 * 1e18
@@ -33,7 +33,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
     const gachaArgs = [
         nftAddress,
-        networkConfig[chainId]["nftSupply"],
+        CHANCE_ARRAY,
         vrfCoordinatorV2address,
         subscriptionId,
         networkConfig[chainId]["gasLane"],
