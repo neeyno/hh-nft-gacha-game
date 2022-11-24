@@ -6,11 +6,11 @@ async function pullSingle() {
     deployer = accounts[0]
 
     const gacha = await ethers.getContract("Gachapon")
-    const nft = await ethers.getContract("GachaNFT")
+    const nft = await ethers.getContract("ExoticNFT")
 
     const txRes = await gacha.connect(deployer).pullSingle()
     const txReceipt = await txRes.wait(1)
-    const reqtId = txReceipt.events[1].args.requestId
+    const reqtId = txReceipt.events[2].args.requestId
 
     console.log("Pull request: " + reqtId)
 

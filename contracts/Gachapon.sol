@@ -6,6 +6,15 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+interface Itoken {
+    function mint(address to, uint256 amount) external;
+
+    function burn(address from, uint256 amount) external returns (bool);
+
+    function balanceOf(address account) external view returns (uint256);
+}
 
 /**
  * @title Nft gachapon contract
@@ -13,13 +22,12 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
  * @notice This contract is ...
  * @dev This implements Chainlink VRF v2
  */
-contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
+contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
     //
     /* -- ERRORS -- */
 
     error Gachapon__RngOutOfRange();
-    //error Gachapon__InsufficientEnergy();
-    //error Gachapon__ItemsOutOfStock();
+    //error Gachapon__InsufficientBalance();
 
     /* -- Chainlink VRF variables -- */
 
@@ -33,11 +41,12 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
 
     /* -- Gacha variables -- */
 
-    //uint256 private constant PULL_COST = 50;
+    uint256 private constant FEE_SINGLE = 1000000000000000000;
+    uint256 private constant FEE_MULTI = 10000000000000000000;
     uint256[] private _chanceArray;
-    //mapping(address => uint256) private _senderToBlock;
     mapping(uint256 => address) private _requestIdToSender;
     IERC1155 private _nft;
+    Itoken private _token;
 
     /* -- EVENTS -- */
 
@@ -48,14 +57,12 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     /* -- FUNCTIONS -- */
 
     constructor(
-        address nftAddress,
         uint256[] memory chanceArray,
         address vrfCoordinatorV2,
         uint64 subscriptionId,
         bytes32 gasLane, // keyHash
         uint32 callbackGasLimit
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
-        _nft = IERC1155(nftAddress);
         _chanceArray = chanceArray;
         _vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         _subscriptionId = subscriptionId;
@@ -65,7 +72,9 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
 
     function pullSingle() external returns (uint256 requestId) {
         address sender = _msgSender();
-        //_senderToBlock[sender] = _getEnergyBlock(_senderToBlock[sender], block.number); //energyBlock;
+
+        if (!_token.burn(sender, FEE_SINGLE)) revert();
+
         requestId = _vrfCoordinator.requestRandomWords(
             _gasLane,
             _subscriptionId,
@@ -73,12 +82,18 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
             _callbackGasLimit,
             NUM_WORDS_SINGLE
         );
+
         _requestIdToSender[requestId] = sender;
         emit PullRequest(requestId, sender, NUM_WORDS_SINGLE);
     }
 
     function pullMulti() external returns (uint256 requestId) {
         address sender = _msgSender();
+
+        if (!_token.burn(sender, FEE_MULTI)) revert();
+        // if (_token.balanceOf(sender) < FEE_MULTI) revert Gachapon__InsufficientBalance();
+        // _token.burn(sender, FEE_MULTI);
+
         requestId = _vrfCoordinator.requestRandomWords(
             _gasLane,
             _subscriptionId,
@@ -86,6 +101,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
             _callbackGasLimit,
             NUM_WORDS_MULTI
         );
+
         _requestIdToSender[requestId] = sender;
         emit PullRequest(requestId, sender, NUM_WORDS_MULTI);
     }
@@ -96,11 +112,13 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
 
         if (randomWords.length == 1) {
             uint256 nftId = _getIdFromRNG(randomWords[0], chanceArray);
+
             _nft.safeTransferFrom(address(this), owner, nftId, 1, "");
             emit FulfilledSingle(requestId, owner, nftId);
         } else {
             uint256[] memory batchNftId = new uint256[](NUM_WORDS_MULTI);
             uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
+
             for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
                 batchNftId[i] = (_getIdFromRNG(randomWords[i], chanceArray));
                 batchNftAmount[i] = 1;
@@ -113,9 +131,12 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         }
     }
 
-    function setNft(address nftAddress, uint256[] memory chanceArray) external {
+    function setNft(address nftAddress) external onlyOwner {
         _nft = IERC1155(nftAddress);
-        _chanceArray = chanceArray;
+    }
+
+    function setToken(address tokenAddress) external onlyOwner {
+        _token = Itoken(tokenAddress);
     }
 
     function _getIdFromRNG(uint256 randomNum, uint256[] memory chanceArray)
@@ -126,11 +147,12 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
         // transform the result to a number between 1 and maxChanceValue inclusively
         uint256 rng = (randomNum % chanceArray[0]) + 1;
         uint256 len = chanceArray.length - 1;
+
         for (uint256 i = 0; i < len; ) {
-            if (rng <= chanceArray[i] && rng > chanceArray[i + 1]) {
-                return i;
-            }
             unchecked {
+                if (rng <= chanceArray[i] && rng > chanceArray[i + 1]) {
+                    return i;
+                }
                 ++i;
             }
         }
@@ -152,10 +174,6 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     //     }
     // }
 
-    function _msgSender() private view returns (address) {
-        return msg.sender;
-    }
-
     /* -- Getter FUNCTIONS -- */
 
     function getChanceArray() external view returns (uint256[] memory) {
@@ -165,10 +183,6 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder {
     function getUserByRequest(uint256 requestId) external view returns (address) {
         return _requestIdToSender[requestId];
     }
-
-    // function getUserEnergy(address user) external view returns (uint256) {
-    //     return _senderToBlock[user];
-    // }
 
     function getNftAddress() external view returns (IERC1155) {
         return _nft;

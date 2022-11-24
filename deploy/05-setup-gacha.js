@@ -13,9 +13,12 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     // })
     // const tokenSupply = ethers.utils.parseUnits(supply.toString(), 18)
 
-    const nft = await ethers.getContract("GachaNFT", deployer)
-    //const token = await ethers.getContract("ExoticToken", deployer)
+    const nft = await ethers.getContract("ExoticNFT", deployer)
+    const token = await ethers.getContract("ExoticToken", deployer)
     const gacha = await ethers.getContract("Gachapon", deployer)
+
+    await gacha.setNft(nft.address)
+    await gacha.setToken(token.address)
 
     const addrArray = [...Array(NFT_SUPPLY.length)].map((_) => gacha.address)
     const idArray = [...Array(NFT_SUPPLY.length)].map((_, i) => i)
