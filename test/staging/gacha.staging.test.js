@@ -13,25 +13,21 @@ developmentChains.includes(network.name)
           before(async () => {
               const accounts = await ethers.getSigners()
               deployer = accounts[0]
-              //player = accounts[1]
-          })
-
-          beforeEach(async function () {
-              nft = await ethers.getContract("GachaNFT")
+              nft = await ethers.getContract("ExoticNFT")
               //token = await ethers.getContract("ExoticToken")
               gacha = await ethers.getContract("Gachapon")
           })
 
           describe("fulfillRandomWords", function () {
-              it("should request and fulfill single pull, give random number from VRF Chainlink", async () => {
+              it("should request random number from VRF Chainlink and fulfill single pull", async () => {
                   let pullRequestId
 
                   await new Promise(async (resolve, reject) => {
                       // setting up the listener
-                      gacha.once("PullFulfilled", async (requestId, owner, nftId) => {
+                      gacha.once("FulfilledSingle", async (requestId, owner, nftId) => {
                           try {
-                              console.log("... PullFulfilled! nft id: " + nftId)
-                              const playerBalance = await nft.balanceOf(owner, nftId)
+                              console.log("PullFulfilled! nft id: " + nftId.toString())
+                              const playerBalance = await nft.balanceOf(deployer.address, nftId)
 
                               assert.equal(owner, deployer.address)
                               assert.equal(requestId.toString(), pullRequestId.toString())
@@ -48,7 +44,42 @@ developmentChains.includes(network.name)
 
                       const txResponse = await gacha.connect(deployer).pullSingle()
                       const txReceipt = await txResponse.wait(1)
-                      pullRequestId = txReceipt.events[1].args.requestId
+                      pullRequestId = txReceipt.events[2].args.requestId
+                      console.log("...")
+                  })
+              })
+              it("should request random number from VRF Chainlink and fulfill multi pull", async () => {
+                  let pullRequestId
+
+                  await new Promise(async (resolve, reject) => {
+                      // setting up the listener
+                      gacha.once("FulfilledMulti", async (requestId, owner, nftId) => {
+                          try {
+                              console.log("PullFulfilled! nft ids: " + nftId.toString())
+                              const addrArray = [...Array(3)].map((_) => deployer.address)
+
+                              const batchBalance = await nft.balanceOfBatch(addrArray, [0, 1, 2])
+                              let totalDeployerBalance = BigNumber.from(1) // 1(not 0) - becuase of previous single pull
+                              batchBalance.map((value) => {
+                                  totalDeployerBalance = totalDeployerBalance.add(value)
+                              })
+
+                              assert.equal(owner, deployer.address)
+                              assert.equal(requestId.toString(), pullRequestId.toString())
+                              assert.equal(totalDeployerBalance.toString(), "11")
+
+                              resolve()
+                          } catch (error) {
+                              console.log(error)
+                              reject(error)
+                          }
+                      })
+
+                      // fire the event, and the listener will pick it up
+
+                      const txResponse = await gacha.connect(deployer).pullMulti()
+                      const txReceipt = await txResponse.wait(1)
+                      pullRequestId = txReceipt.events[2].args.requestId
                       console.log("...")
                   })
               })

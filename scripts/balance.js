@@ -7,7 +7,7 @@ async function balance() {
     const chainId = network.config.chainId
 
     const gacha = await ethers.getContract("Gachapon")
-    const nft = await ethers.getContract("GachaNFT")
+    const nft = await ethers.getContract("ExoticNFT")
     //const nftSupply = networkConfig[chainId]["nftSupply"]
 
     const addrArray = [...Array(NFT_SUPPLY.length)].map((_) => gacha.address)

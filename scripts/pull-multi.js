@@ -6,11 +6,11 @@ async function pullMulti() {
     deployer = accounts[0]
 
     const gacha = await ethers.getContract("Gachapon")
-    const nft = await ethers.getContract("GachaNFT")
+    const nft = await ethers.getContract("ExoticNFT")
 
     const txRes = await gacha.connect(deployer).pullMulti()
     const txReceipt = await txRes.wait(1)
-    const reqId = txReceipt.events[1].args.requestId
+    const reqId = txReceipt.events[2].args.requestId
     console.log("Pull request: " + reqId)
 
     const filter = gacha.filters.FulfilledMulti(reqId)

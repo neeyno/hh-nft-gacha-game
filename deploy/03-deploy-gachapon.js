@@ -9,9 +9,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
 
-    const nft = await deployments.get("GachaNFT")
-    const nftAddress = nft.address
-
     let vrfCoordinatorV2mock, vrfCoordinatorV2address, subscriptionId
     if (developmentChains.includes(network.name)) {
         log("getting mock...")
@@ -32,7 +29,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     }
 
     const gachaArgs = [
-        nftAddress,
         CHANCE_ARRAY,
         vrfCoordinatorV2address,
         subscriptionId,
@@ -53,10 +49,10 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         await vrfCoordinatorV2mock.addConsumer(subscriptionId.toNumber(), gacha.address)
     }
 
-    // if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-    //     log("verifying...")
-    //     await verify(gacha.address, gachaArgs)
-    // }
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+        log("verifying...")
+        await verify(gacha.address, gachaArgs, `${gacha.sourceName}:${gacha.contractName}`)
+    }
 
     log("------------------------------------------")
 }

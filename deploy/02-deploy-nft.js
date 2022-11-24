@@ -44,18 +44,20 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     // const rarity = nftSupply.slice(0, -1)
     const nftArgs = [imageURI, NFT_SUPPLY]
 
-    const nft = await deploy("GachaNFT", {
-        contract: "GachaNFT",
+    const nft = await deploy("ExoticNFT", {
+        contract: "ExoticNFT",
         from: deployer,
         args: nftArgs,
         log: true,
         waitConfirmations: network.config.blockConfirmations || 1,
     })
 
-    // if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-    //     log("verifying...")
-    //     await verify(nft.address, nftArgs)
-    // }
+    //log(`${nft.sourceName}:${nft.contractName}`)
+
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+        log("verifying...")
+        await verify(nft.address, nftArgs, `${nft.sourceName}:${nft.contractName}`)
+    }
 
     log("------------------------------------------")
 }

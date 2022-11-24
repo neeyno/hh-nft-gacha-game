@@ -1,10 +1,11 @@
 const { run } = require("hardhat")
 
 // async function verify(contractAddress, args) {
-const verify = async (contractAddress, args) => {
+const verify = async (contractAddress, args, contractName) => {
     console.log("Verifying contract ...")
     try {
         await run("verify:verify", {
+            contract: contractName,
             address: contractAddress,
             constructorArguments: args,
         })
