@@ -14,7 +14,7 @@ async function pullMulti() {
     // const reqId = txReceipt.events[2].args.requestId
     // console.log("Pull request: " + reqId)
 
-    const reqId = BigNumber.from(10)
+    const reqId = BigNumber.from(1)
 
     if (developmentChains.includes(network.name)) {
         const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
