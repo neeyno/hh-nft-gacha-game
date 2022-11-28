@@ -13,8 +13,9 @@ contract ExoticToken is ERC20, Pausable {
 
     // These functions should have restricted access
     // but they are available to the public for testing reasons.
-    function mint(address to, uint256 amount) external {
+    function mint(address to, uint256 amount) external returns (bool) {
         _mint(to, amount);
+        return true;
     }
 
     function burn(address from, uint256 amount) external returns (bool) {

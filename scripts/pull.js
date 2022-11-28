@@ -14,7 +14,7 @@ async function pullSingle() {
 
     console.log("Pull request: " + reqtId)
 
-    const filter = gacha.filters.FulfilledSingle(reqtId)
+    const filter = gacha.filters.PullFulfilled(reqtId)
 
     await new Promise(async (resolve, reject) => {
         // setting up the listener
