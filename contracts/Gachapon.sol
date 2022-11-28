@@ -9,11 +9,9 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface Itoken {
-    function mint(address to, uint256 amount) external;
+    function mint(address to, uint256 amount) external returns (bool);
 
     function burn(address from, uint256 amount) external returns (bool);
-
-    function balanceOf(address account) external view returns (uint256);
 }
 
 /**
@@ -50,9 +48,8 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
 
     /* -- EVENTS -- */
 
-    event PullRequest(uint256 indexed requestId, address indexed sender, uint32 numWords);
-    event FulfilledSingle(uint256 indexed requestId, address indexed owner, uint256 nftId);
-    event FulfilledMulti(uint256 indexed requestId, address indexed owner, uint256[] nftId);
+    event PullRequested(uint256 indexed requestId, address indexed sender, uint32 numWords);
+    event PullFulfilled(uint256 indexed requestId, address indexed owner, uint256[] nftId);
 
     /* -- FUNCTIONS -- */
 
@@ -84,15 +81,13 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         );
 
         _requestIdToSender[requestId] = sender;
-        emit PullRequest(requestId, sender, NUM_WORDS_SINGLE);
+        emit PullRequested(requestId, sender, NUM_WORDS_SINGLE);
     }
 
     function pullMulti() external returns (uint256 requestId) {
         address sender = _msgSender();
 
         if (!_token.burn(sender, FEE_MULTI)) revert();
-        // if (_token.balanceOf(sender) < FEE_MULTI) revert Gachapon__InsufficientBalance();
-        // _token.burn(sender, FEE_MULTI);
 
         requestId = _vrfCoordinator.requestRandomWords(
             _gasLane,
@@ -103,32 +98,28 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         );
 
         _requestIdToSender[requestId] = sender;
-        emit PullRequest(requestId, sender, NUM_WORDS_MULTI);
+        emit PullRequested(requestId, sender, NUM_WORDS_MULTI);
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         address owner = _requestIdToSender[requestId];
         uint256[] memory chanceArray = _chanceArray;
 
-        if (randomWords.length == 1) {
-            uint256 nftId = _getIdFromRNG(randomWords[0], chanceArray);
-
-            _nft.safeTransferFrom(address(this), owner, nftId, 1, "");
-            emit FulfilledSingle(requestId, owner, nftId);
+        if (randomWords.length == NUM_WORDS_SINGLE) {
+            randomWords[0] = _getIdFromRNG(randomWords[0], chanceArray);
+            _nft.safeTransferFrom(address(this), owner, randomWords[0], NUM_WORDS_SINGLE, "");
         } else {
-            uint256[] memory batchNftId = new uint256[](NUM_WORDS_MULTI);
             uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
-
             for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
-                batchNftId[i] = (_getIdFromRNG(randomWords[i], chanceArray));
+                randomWords[i] = (_getIdFromRNG(randomWords[i], chanceArray));
                 batchNftAmount[i] = 1;
                 unchecked {
                     ++i;
                 }
             }
-            _nft.safeBatchTransferFrom(address(this), owner, batchNftId, batchNftAmount, "");
-            emit FulfilledMulti(requestId, owner, batchNftId);
+            _nft.safeBatchTransferFrom(address(this), owner, randomWords, batchNftAmount, "");
         }
+        emit PullFulfilled(requestId, owner, randomWords);
     }
 
     function setNft(address nftAddress) external onlyOwner {
@@ -139,18 +130,16 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         _token = Itoken(tokenAddress);
     }
 
-    function _getIdFromRNG(uint256 randomNum, uint256[] memory chanceArray)
-        private
-        pure
-        returns (uint256)
-    {
+    function _getIdFromRNG(
+        uint256 randomNum,
+        uint256[] memory chanceArray
+    ) private pure returns (uint256) {
         // transform the result to a number between 1 and maxChanceValue inclusively
-        uint256 rng = (randomNum % chanceArray[0]) + 1;
-        uint256 len = chanceArray.length - 1;
-
-        for (uint256 i = 0; i < len; ) {
-            unchecked {
-                if (rng <= chanceArray[i] && rng > chanceArray[i + 1]) {
+        unchecked {
+            randomNum = (randomNum % chanceArray[0]) + 1;
+            for (uint256 i = 0; i < chanceArray.length - 1; ) {
+                if (randomNum > chanceArray[i + 1]) {
+                    //&& rng <= chanceArray[i]) {
                     return i;
                 }
                 ++i;
@@ -186,6 +175,10 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
 
     function getNftAddress() external view returns (IERC1155) {
         return _nft;
+    }
+
+    function getTokenAddress() external view returns (Itoken) {
+        return _token;
     }
 
     function getVrfCoordinator() external view returns (VRFCoordinatorV2Interface) {

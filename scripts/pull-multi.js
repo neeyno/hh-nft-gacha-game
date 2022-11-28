@@ -13,7 +13,7 @@ async function pullMulti() {
     const reqId = txReceipt.events[2].args.requestId
     console.log("Pull request: " + reqId)
 
-    const filter = gacha.filters.FulfilledMulti(reqId)
+    const filter = gacha.filters.PullFulfilled(reqId)
 
     await new Promise(async (resolve, reject) => {
         // setting up the listener

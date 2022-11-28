@@ -69,7 +69,7 @@ const chainId = network.config.chainId
 
               it("emits event on single pull", async () => {
                   await expect(gacha.connect(player).pullSingle())
-                      .to.emit(gacha, "PullRequest")
+                      .to.emit(gacha, "PullRequested")
                       .withArgs(BigNumber.from(1), player.address, BigNumber.from(1))
               })
 
@@ -98,7 +98,7 @@ const chainId = network.config.chainId
 
               it("emits event on multi pull", async () => {
                   await expect(gacha.connect(player).pullMulti())
-                      .to.emit(gacha, "PullRequest")
+                      .to.emit(gacha, "PullRequested")
                       .withArgs(BigNumber.from(1), player.address, BigNumber.from(10))
               })
 
@@ -140,6 +140,8 @@ const chainId = network.config.chainId
                               assert.equal(value.toString(), "1")
                               assert.equal(playerBalance.toString(), "1")
 
+                              console.log(id.toString())
+
                               resolve()
                           } catch (error) {
                               console.log(error)
@@ -160,10 +162,13 @@ const chainId = network.config.chainId
 
                   await new Promise(async (resolve, reject) => {
                       // setting up the listener
-                      gacha.once("FulfilledSingle", async (requestId, owner, nftId) => {
+                      gacha.once("PullFulfilled", async (requestId, owner, nftId) => {
                           try {
                               assert.equal(owner, player.address)
                               assert.equal(requestId.toString(), pullRequestId.toString())
+                              assert.equal(nftId.length, 1)
+
+                              console.log(nftId.toString())
 
                               resolve()
                           } catch (error) {
@@ -233,10 +238,11 @@ const chainId = network.config.chainId
 
                   await new Promise(async (resolve, reject) => {
                       // setting up the listener
-                      gacha.once("FulfilledMulti", async (requestId, owner, nftId) => {
+                      gacha.once("PullFulfilled", async (requestId, owner, nftId) => {
                           try {
                               assert.equal(owner, player.address)
                               assert.equal(requestId.toString(), pullRequestId.toString())
+                              assert.equal(nftId.length, 10)
 
                               console.log(nftId.toString())
 

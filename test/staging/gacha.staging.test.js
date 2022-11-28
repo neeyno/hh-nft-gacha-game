@@ -20,14 +20,18 @@ developmentChains.includes(network.name)
 
           describe("fulfillRandomWords", function () {
               it("should request random number from VRF Chainlink and fulfill single pull", async () => {
-                  let pullRequestId
+                  const txResponse = await gacha.connect(deployer).pullSingle()
+                  const txReceipt = await txResponse.wait(1)
+                  const pullRequestId = txReceipt.events[2].args.requestId
+                  const filter = gacha.filters.PullFulfilled(pullRequestId)
+                  console.log("...")
 
                   await new Promise(async (resolve, reject) => {
                       // setting up the listener
-                      gacha.once("FulfilledSingle", async (requestId, owner, nftId) => {
+                      gacha.once(filter, async (requestId, owner, nftId) => {
                           try {
                               console.log("PullFulfilled! nft id: " + nftId.toString())
-                              const playerBalance = await nft.balanceOf(deployer.address, nftId)
+                              const playerBalance = await nft.balanceOf(deployer.address, nftId[0])
 
                               assert.equal(owner, deployer.address)
                               assert.equal(requestId.toString(), pullRequestId.toString())
@@ -41,25 +45,24 @@ developmentChains.includes(network.name)
                       })
 
                       // fire the event, and the listener will pick it up
-
-                      const txResponse = await gacha.connect(deployer).pullSingle()
-                      const txReceipt = await txResponse.wait(1)
-                      pullRequestId = txReceipt.events[2].args.requestId
-                      console.log("...")
                   })
               })
               it("should request random number from VRF Chainlink and fulfill multi pull", async () => {
-                  let pullRequestId
+                  const txResponse = await gacha.connect(deployer).pullMulti()
+                  const txReceipt = await txResponse.wait(1)
+                  const pullRequestId = txReceipt.events[2].args.requestId
+                  const filter = gacha.filters.PullFulfilled(pullRequestId)
+                  console.log("...")
 
                   await new Promise(async (resolve, reject) => {
                       // setting up the listener
-                      gacha.once("FulfilledMulti", async (requestId, owner, nftId) => {
+                      gacha.once(filter, async (requestId, owner, nftId) => {
                           try {
                               console.log("PullFulfilled! nft ids: " + nftId.toString())
                               const addrArray = [...Array(3)].map((_) => deployer.address)
 
                               const batchBalance = await nft.balanceOfBatch(addrArray, [0, 1, 2])
-                              let totalDeployerBalance = BigNumber.from(1) // 1(not 0) - becuase of previous single pull
+                              let totalDeployerBalance = BigNumber.from(1) // 1(not 0) - because of previous single pull
                               batchBalance.map((value) => {
                                   totalDeployerBalance = totalDeployerBalance.add(value)
                               })
@@ -76,11 +79,6 @@ developmentChains.includes(network.name)
                       })
 
                       // fire the event, and the listener will pick it up
-
-                      const txResponse = await gacha.connect(deployer).pullMulti()
-                      const txReceipt = await txResponse.wait(1)
-                      pullRequestId = txReceipt.events[2].args.requestId
-                      console.log("...")
                   })
               })
           })
