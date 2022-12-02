@@ -10,7 +10,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const tokenSupply = ethers.utils.parseUnits("1000", 18)
     //const gacha = await ethers.getContract("Gachapon")
 
-    const tokenArgs = [tokenSupply]
+    const tokenArgs = [] //[tokenSupply]
     const token = await deploy("ExoticToken", {
         contract: "ExoticToken",
         from: deployer,

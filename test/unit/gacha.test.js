@@ -10,8 +10,8 @@ const chainId = network.config.chainId
     : describe("Gacha unit test", function () {
           let token, nft, gacha, vrfCoordinatorV2Mock, deployer, player
 
-          const FEE_SINGLE = ethers.utils.parseUnits("1", 18)
-          const FEE_MULTI = ethers.utils.parseUnits("10", 18)
+          const FEE_SINGLE = ethers.utils.parseUnits("50", 18)
+          const FEE_MULTI = ethers.utils.parseUnits("500", 18)
 
           before(async () => {
               const accounts = await ethers.getSigners()

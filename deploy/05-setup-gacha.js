@@ -6,13 +6,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
 
-    //const nftSupply = networkConfig[chainId]["nftSupply"]
-    // let supply = 0
-    // nftValue.forEach((value, i) => {
-    //     supply += value * nftSupply[i]
-    // })
-    // const tokenSupply = ethers.utils.parseUnits(supply.toString(), 18)
-
     const nft = await ethers.getContract("ExoticNFT", deployer)
     const token = await ethers.getContract("ExoticToken", deployer)
     const gacha = await ethers.getContract("Gachapon", deployer)

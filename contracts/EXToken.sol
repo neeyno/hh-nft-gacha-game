@@ -2,13 +2,14 @@
 
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/security/Pausable.sol";
+//import "@openzeppelin/contracts/security/Pausable.sol";
 //import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract ExoticToken is ERC20, Pausable {
-    constructor(uint256 initialSupply) ERC20("Exotic Token", "EXT") {
-        _mint(msg.sender, initialSupply);
+contract ExoticToken is ERC20 {
+    //constructor(uint256 initialSupply)
+    constructor() ERC20("Exotic Token", "EXT") {
+        //_mint(msg.sender, initialSupply);
     }
 
     // These functions should have restricted access
@@ -23,27 +24,20 @@ contract ExoticToken is ERC20, Pausable {
         return true;
     }
 
-    function setPaused() external {
-        paused() ? _unpause() : _pause();
-    }
+    // function setPaused() external {
+    //     paused() ? _unpause() : _pause();
+    // }
 
     //
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 value
-    ) internal override {
-        _requireNotPaused();
-        super._transfer(from, to, value);
+    function _transfer(address from, address to, uint256 value) internal override {
+        //_requireNotPaused()
+        revert("Function disabled");
+        //super._transfer(from, to, value);
     }
 
-    function _approve(
-        address owner,
-        address spender,
-        uint256 amount
-    ) internal override {
-        _requireNotPaused();
-        super._approve(owner, spender, amount);
+    function _approve(address owner, address spender, uint256 amount) internal override {
+        revert("Function disabled");
+        //super._approve(owner, spender, amount);
     }
 }

@@ -17,6 +17,7 @@ contract ExoticNFT is ERC1155URIStorage {
     string[3] private _imageURI;
     string[3] private _name = ["COMMON", "EPIC", "LEGENDARY"];
     mapping(uint256 => uint256) private _totalSupply;
+    uint8[625] private _idsArray = [0, 0, 0];
 
     constructor(string[3] memory imageUri, uint256[3] memory supply) ERC1155("") {
         _imageURI = imageUri;
@@ -25,11 +26,7 @@ contract ExoticNFT is ERC1155URIStorage {
         _mint(msg.sender, LEGENDARY, supply[LEGENDARY], "");
     }
 
-    function burn(
-        address account,
-        uint256 id,
-        uint256 value
-    ) public {
+    function burn(address account, uint256 id, uint256 value) public {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
@@ -38,11 +35,7 @@ contract ExoticNFT is ERC1155URIStorage {
         _burn(account, id, value);
     }
 
-    function burnBatch(
-        address account,
-        uint256[] memory ids,
-        uint256[] memory values
-    ) public {
+    function burnBatch(address account, uint256[] memory ids, uint256[] memory values) public {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
@@ -52,6 +45,7 @@ contract ExoticNFT is ERC1155URIStorage {
     }
 
     function uri(uint256 id) public view override returns (string memory) {
+        // id = _idsArray[id];
         return
             string(
                 abi.encodePacked(

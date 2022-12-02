@@ -34,6 +34,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         subscriptionId,
         networkConfig[chainId]["gasLane"],
         networkConfig[chainId]["callbackGasLimit"],
+        networkConfig[chainId]["tokenPrice"],
     ]
 
     const gacha = await deploy("Gachapon", {

@@ -9,12 +9,12 @@ async function pullMulti() {
     const gacha = await ethers.getContract("Gachapon")
     //const nft = await ethers.getContract("ExoticNFT")
 
-    // const txRes = await gacha.connect(deployer).pullMulti()
+    const reqId = (await gacha.connect(deployer).callStatic.pullMulti()).sub(1)
     // const txReceipt = await txRes.wait(1)
     // const reqId = txReceipt.events[2].args.requestId
     // console.log("Pull request: " + reqId)
 
-    const reqId = BigNumber.from(1)
+    //const reqId = BigNumber.from(11)
 
     if (developmentChains.includes(network.name)) {
         const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")

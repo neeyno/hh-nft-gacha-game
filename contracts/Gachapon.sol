@@ -25,6 +25,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
     /* -- ERRORS -- */
 
     error Gachapon__RngOutOfRange();
+    error Gachapon__InsufficientValue();
     //error Gachapon__InsufficientBalance();
 
     /* -- Chainlink VRF variables -- */
@@ -39,8 +40,9 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
 
     /* -- Gacha variables -- */
 
-    uint256 private constant FEE_SINGLE = 1000000000000000000;
-    uint256 private constant FEE_MULTI = 10000000000000000000;
+    uint256 private constant FEE_SINGLE = 50000000000000000000;
+    uint256 private constant FEE_MULTI = 500000000000000000000;
+    uint256 private immutable _packPrice;
     uint256[] private _chanceArray;
     mapping(uint256 => address) private _requestIdToSender;
     IERC1155 private _nft;
@@ -58,13 +60,24 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         address vrfCoordinatorV2,
         uint64 subscriptionId,
         bytes32 gasLane, // keyHash
-        uint32 callbackGasLimit
+        uint32 callbackGasLimit,
+        uint256 price
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         _chanceArray = chanceArray;
         _vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         _subscriptionId = subscriptionId;
         _gasLane = gasLane;
         _callbackGasLimit = callbackGasLimit;
+        _packPrice = price;
+    }
+
+    function buyTokenPack() external payable {
+        if (msg.value < _packPrice) revert Gachapon__InsufficientValue();
+        _token.mint(msg.sender, FEE_SINGLE * 27);
+    }
+
+    function withdraw() external {
+        payable(owner()).call{value: address(this).balance}("");
     }
 
     function pullSingle() external returns (uint256 requestId) {
