@@ -3,10 +3,10 @@
     <a href="https://steep-boat-4957.on.fleek.co/" target="_blank">
         <strong>| View DEMO </strong>
     </a>
-    <a href="https://github.com/neeyno/hardhat-dex" target="_blank" >
+    <a href="https://github.com/neeyno/hh-nft-gacha-game/" target="_blank" >
         <strong>| Smart Contracts </strong>
     </a>
-    <a  href="https://github.com/neeyno/nextjs-dex" target="_blank">
+    <a  href="https://github.com/neeyno/nextjs-gacha/" target="_blank">
         <strong>| Front-end |</strong>
     </a>
  </p>
