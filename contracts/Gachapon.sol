@@ -23,8 +23,9 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
     //
     /* -- ERRORS -- */
 
-    error Gachapon__RngOutOfRange();
-    error Gachapon__InsufficientValue();
+    error Gacha_RngOutOfRange();
+    error Gacha_InsufficientValue();
+    error Gacha_deployFailed();
     //error Gachapon__InsufficientBalance();
 
     /* -- Chainlink VRF variables -- */
@@ -75,7 +76,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
      * msg.value greater than _packPrice is required.
      */
     function buyTokenPack() external payable {
-        if (msg.value < _packPrice) revert Gachapon__InsufficientValue();
+        if (msg.value < _packPrice) revert Gacha_InsufficientValue();
         _token.mint(msg.sender, FEE_SINGLE * 27);
     }
 
@@ -136,7 +137,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
      * @dev This is function that Chainlink VRF node calls to fulfill request
      * and send NFTs to the owner.
      * @param requestId is given when a user calls pull funtions
-     * @param randomWords are transformed into a fixed-range random NFT id
+     * @param randomWords are random numbers from Chainlink VRF response.
      */
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         address owner = _requestIdToSender[requestId];
@@ -159,8 +160,17 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         emit PullFulfilled(requestId, owner, randomWords);
     }
 
-    function setNft(address nftAddress) external onlyOwner {
-        _nft = IERC1155(nftAddress);
+    function setNftContract(bytes memory _code) external onlyOwner returns (address addr) {
+        assembly {
+            //(create v, p, n)
+            // v -amount eth to send
+            // p - pointer in memory to start of code
+            // n - size of code
+            addr := create(0, add(_code, 0x20), mload(_code))
+        }
+        if (addr == address(0)) revert Gacha_deployFailed();
+        //return addr;
+        //_nft = IERC1155(nftAddress);
     }
 
     function setToken(address tokenAddress) external onlyOwner {
@@ -185,7 +195,7 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
                 ++i;
             }
         }
-        revert Gachapon__RngOutOfRange();
+        revert Gacha_RngOutOfRange();
     }
 
     /* -- Getter FUNCTIONS -- */

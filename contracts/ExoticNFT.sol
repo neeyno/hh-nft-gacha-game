@@ -2,29 +2,65 @@
 
 pragma solidity 0.8.13;
 
-//import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 //import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 //import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
-import "base64-sol/base64.sol";
+//import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+//import "base64-sol/base64.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Base64.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ExoticNFT is ERC1155URIStorage {
+contract ExoticNFT is ERC1155, Ownable {
+    using Strings for uint256;
     //
+    uint256 private constant LEGENDARY_0 = 0;
+    uint256 private constant LEGENDARY_1 = 1;
+    uint256 private constant LEGENDARY_2 = 2;
+    uint256 private constant EPIC_0 = 3;
+    uint256 private constant EPIC_1 = 4;
+    uint256 private constant EPIC_3 = 5;
+    uint256 private constant COMMON_0 = 6;
+    uint256 private constant COMMON_1 = 7;
+    uint256 private constant COMMON_2 = 8;
+
     string private constant base64jsonPrefix = "data:application/json;base64,";
-    uint256 private constant COMMON = 0;
-    uint256 private constant EPIC = 1;
-    uint256 private constant LEGENDARY = 2;
-    string[3] private _imageURI;
-    string[3] private _name = ["COMMON", "EPIC", "LEGENDARY"];
+    string[] private _imageURI;
+    string[] private _name = [
+        "LEGENDARY0",
+        "LEGENDARY1",
+        "LEGENDARY2"
+        "EPIC0",
+        "EPIC1",
+        "EPIC2",
+        "COMMON0",
+        "COMMON1",
+        "COMMON2"
+    ];
+    uint8[] private _idsArray; // = [0, 0, 0, 1, 1, 1, 2, 2, 2...];
+    uint256 private blockTimeLinit;
+
     mapping(uint256 => uint256) private _totalSupply;
 
-    //uint8[625] private _idsArray = [0, 0, 0];
-
-    constructor(string[3] memory imageUri, uint256[3] memory supply) ERC1155("") {
+    /**
+     * @dev Initializes the contract setting the ImageURI and items id array.
+     */
+    constructor(string[] memory imageUri, uint8[] memory idsArray) ERC1155("") {
         _imageURI = imageUri;
-        _mint(msg.sender, COMMON, supply[COMMON], "");
-        _mint(msg.sender, EPIC, supply[EPIC], "");
-        _mint(msg.sender, LEGENDARY, supply[LEGENDARY], "");
+        _idsArray = idsArray;
+    }
+
+    function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
+        _mint(account, id, amount, data);
+    }
+
+    function mintBatch(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public onlyOwner {
+        _mintBatch(to, ids, amounts, data);
     }
 
     function burn(address account, uint256 id, uint256 value) public {
@@ -43,6 +79,10 @@ contract ExoticNFT is ERC1155URIStorage {
         );
 
         _burnBatch(account, ids, values);
+    }
+
+    function maxChanceValue() public pure returns (uint256) {
+        return 93;
     }
 
     function uri(uint256 id) public view override returns (string memory) {
@@ -94,7 +134,7 @@ contract ExoticNFT is ERC1155URIStorage {
         uint256[] memory amounts,
         bytes memory data
     ) internal override(ERC1155) {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+        //super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
 
         if (from == address(0)) {
             for (uint256 i = 0; i < ids.length; ++i) {
