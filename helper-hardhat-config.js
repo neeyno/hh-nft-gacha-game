@@ -34,7 +34,7 @@ const networkConfig = {
     },
 }
 
-const NFT_SUPPLY = [99999, 9999, 999]
+const NFT_SUPPLY = [9999, 999, 99]
 const CHANCE_ARRAY = [100, 11, 1, 0]
 
 const developmentChains = ["hardhat", "localhost"]

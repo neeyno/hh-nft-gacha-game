@@ -15,10 +15,9 @@ interface Itoken {
 }
 
 /**
- * @title Nft gachapon contract
+ * @title Nft gacha contract
  * @author neeyno
- * @notice This contract is ...
- * @dev This implements Chainlink VRF v2
+ * @dev This contract implements Chainlink VRFv2 and simple gacha-mechanics
  */
 contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
     //
@@ -71,15 +70,28 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         _packPrice = price;
     }
 
+    /**
+     * @dev The function mints in-game tokens to the buyer address for a fixed amount of Eth.
+     * msg.value greater than _packPrice is required.
+     */
     function buyTokenPack() external payable {
         if (msg.value < _packPrice) revert Gachapon__InsufficientValue();
         _token.mint(msg.sender, FEE_SINGLE * 27);
     }
 
+    /**
+     * withdraws ETH from this contract to the address of the owner.
+     */
     function withdraw() external {
         payable(owner()).call{value: address(this).balance}("");
     }
 
+    /**
+     * @dev Single pull function - burns fixed amount of in-game tokens thats equal to FEE_SINGLE
+     * and requests single(1) random number from Chainlink.
+     * @dev The function reverts if there is not enough tokens on a sender's balance
+     * @return requestId - a uniq id assigned to a user pull
+     */
     function pullSingle() external returns (uint256 requestId) {
         address sender = _msgSender();
 
@@ -97,6 +109,12 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         emit PullRequested(requestId, sender, NUM_WORDS_SINGLE);
     }
 
+    /**
+     * @dev Multi pull function - burns fixed amount of in-game tokens thats equal to FEE_MULTI
+     * and requests multi(10) random numbers from Chainlink VRF.
+     * @dev The function reverts if there is not enough tokens on a sender's balance
+     * @return requestId - a uniq id assigned to a user pull
+     */
     function pullMulti() external returns (uint256 requestId) {
         address sender = _msgSender();
 
@@ -114,6 +132,12 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         emit PullRequested(requestId, sender, NUM_WORDS_MULTI);
     }
 
+    /**
+     * @dev This is function that Chainlink VRF node calls to fulfill request
+     * and send NFTs to the owner.
+     * @param requestId is given when a user calls pull funtions
+     * @param randomWords are transformed into a fixed-range random NFT id
+     */
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
         address owner = _requestIdToSender[requestId];
         uint256[] memory chanceArray = _chanceArray;
@@ -143,11 +167,14 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         _token = Itoken(tokenAddress);
     }
 
+    /**
+     * @dev Transforms an initial randomWords to a number
+     * between 1 and max chance value inclusively
+     */
     function _getIdFromRNG(
         uint256 randomNum,
         uint256[] memory chanceArray
     ) private pure returns (uint256) {
-        // transform the result to a number between 1 and maxChanceValue inclusively
         unchecked {
             randomNum = (randomNum % chanceArray[0]) + 1;
             for (uint256 i = 0; i < chanceArray.length - 1; ) {
@@ -160,21 +187,6 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         }
         revert Gachapon__RngOutOfRange();
     }
-
-    // function _getEnergyBlock(uint256 prevEnergy, uint256 blockNum) private pure returns (uint256) {
-    //     // not implemented
-
-    //     if (prevEnergy == 0) {
-    //         return blockNum;
-    //     } else {
-    //         uint256 energy = blockNum - prevEnergy;
-    //         if (energy < PULL_COST) {
-    //             revert Gachapon__InsufficientEnergy();
-    //         }
-    //         energy = energy > PULL_COST * 5 ? PULL_COST * 4 : energy - PULL_COST; // limit of the energy
-    //         return blockNum - energy;
-    //     }
-    // }
 
     /* -- Getter FUNCTIONS -- */
 

@@ -4,10 +4,24 @@ const fs = require("fs")
 const FRONTEND_ADDRESSES_FILE = "../nextjs-nft-gg/lib/contractAddresses.json"
 const FRONTEND_ABI_LOCATION = "../nextjs-nft-gg/lib/"
 
-async function updateContractAddresses() {
-    const nft = await ethers.getContract("ExoticNFT")
+module.exports = async function ({ deployments }) {
+    if (process.env.UPDATE_FRONTEND === true) {
+        console.log("Updating frontend")
+        await updateContractAddresses(deployments)
+        await updateAbi()
+        console.log("------------------------------------------")
+    }
+}
+
+async function updateContractAddresses(deployments) {
     const token = await ethers.getContract("ExoticToken")
+    const nft = await ethers.getContract("ExoticNFT")
     const gacha = await ethers.getContract("Gachapon")
+    // const { deploy, log, get } = deployments
+
+    // const nft = await get("ExoticNFT")
+    // const token = await get("ExoticToken")
+    // const gacha = await get("Gachapon")
 
     const contractAddresses = JSON.parse(fs.readFileSync(FRONTEND_ADDRESSES_FILE, "utf8"))
     const chainId = network.config.chainId.toString()
@@ -51,15 +65,6 @@ async function updateAbi() {
         `${FRONTEND_ABI_LOCATION}tokenAbi.json`,
         token.interface.format(ethers.utils.FormatTypes.json)
     )
-}
-
-module.exports = async function () {
-    if (process.env.UPDATE_FRONTEND) {
-        console.log("Updating frontend")
-        await updateContractAddresses()
-        await updateAbi()
-        console.log("------------------------------------------")
-    }
 }
 
 module.exports.tags = ["all", "frontend"]

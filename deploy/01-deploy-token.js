@@ -21,6 +21,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...")
+        //await verify(token.address, tokenArgs, `contracts/EXToken.sol:ExoticToken`)
         await verify(token.address, tokenArgs, `${token.sourceName}:${token.contractName}`)
     }
 

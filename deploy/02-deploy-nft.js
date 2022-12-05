@@ -55,10 +55,9 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         waitConfirmations: network.config.blockConfirmations || 1,
     })
 
-    //log(`${nft.sourceName}:${nft.contractName}`)
-
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("verifying...")
+        //await verify(nft.address, nftArgs, `contracts/ExoticNFT.sol:ExoticNFT`)
         await verify(nft.address, nftArgs, `${nft.sourceName}:${nft.contractName}`)
     }
 

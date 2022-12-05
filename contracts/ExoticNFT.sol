@@ -17,7 +17,8 @@ contract ExoticNFT is ERC1155URIStorage {
     string[3] private _imageURI;
     string[3] private _name = ["COMMON", "EPIC", "LEGENDARY"];
     mapping(uint256 => uint256) private _totalSupply;
-    uint8[625] private _idsArray = [0, 0, 0];
+
+    //uint8[625] private _idsArray = [0, 0, 0];
 
     constructor(string[3] memory imageUri, uint256[3] memory supply) ERC1155("") {
         _imageURI = imageUri;

@@ -52,6 +52,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("verifying...")
+        //await verify(gacha.address, gachaArgs, `contracts/Gachapon.sol:Gachapon`)
         await verify(gacha.address, gachaArgs, `${gacha.sourceName}:${gacha.contractName}`)
     }
 

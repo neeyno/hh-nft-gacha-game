@@ -5,7 +5,7 @@ require("@nomiclabs/hardhat-etherscan")
 require("hardhat-deploy")
 require("hardhat-gas-reporter")
 require("solidity-coverage")
-//require("hardhat-contract-sizer")
+require("hardhat-contract-sizer")
 
 const MAINNET_RPC_URL =
     `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}` ||
@@ -71,7 +71,7 @@ module.exports = {
         },
         hardhat: {
             chainId: 31337,
-            blockGasLimit: 12450000,
+            //blockGasLimit: 12450000,
             blockConfirmations: 1,
         },
         localhost: {
@@ -94,12 +94,12 @@ module.exports = {
             goerli: ETHERSCAN_API_KEY,
             mainnet: ETHERSCAN_API_KEY,
             polygon: POLYGONSCAN_API_KEY,
-            mumbai: POLYGONSCAN_API_KEY,
+            polygonMumbai: POLYGONSCAN_API_KEY,
             bnbtest: BSCSCAN_API_KEY,
         },
     },
     gasReporter: {
-        enabled: true,
+        enabled: false,
         outputFile: "gas-report.txt",
         noColors: true,
         currency: "USD",
