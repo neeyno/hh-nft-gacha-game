@@ -16,7 +16,7 @@ function genArray(inputArray) {
         ++i
     }
     console.log(array.length)
-    console.log(array[inputArray[lastIndex] - 1])
+    console.log(array[array.length - 1])
     return array
     //fs.writeFileSync(`./idArray.json`, JSON.stringify(array))
 }

@@ -38,7 +38,7 @@ contract ExoticNFT is ERC1155, Ownable {
         "COMMON2"
     ];
     uint8[] private _idsArray; // = [0, 0, 0, 1, 1, 1, 2, 2, 2...];
-    uint256 private blockTimeLinit;
+    uint256 private blockTimeLimit;
 
     mapping(uint256 => uint256) private _totalSupply;
 
@@ -50,8 +50,14 @@ contract ExoticNFT is ERC1155, Ownable {
         _idsArray = idsArray;
     }
 
-    function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
-        _mint(account, id, amount, data);
+    function mint(
+        address account,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) external onlyOwner {
+        uint8 _id = _idsArray[id]; // modified
+        _mint(account, _id, amount, data);
     }
 
     function mintBatch(
@@ -59,11 +65,18 @@ contract ExoticNFT is ERC1155, Ownable {
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) public onlyOwner {
+    ) external onlyOwner {
+        uint8[] memory idsArray = _idsArray; // modified
+        for (uint256 i = 0; i < idsArray.length; ) {
+            ids[i] = idsArray[ids[i]];
+            unchecked {
+                ++i;
+            }
+        }
         _mintBatch(to, ids, amounts, data);
     }
 
-    function burn(address account, uint256 id, uint256 value) public {
+    function burn(address account, uint256 id, uint256 value) external {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
@@ -72,7 +85,7 @@ contract ExoticNFT is ERC1155, Ownable {
         _burn(account, id, value);
     }
 
-    function burnBatch(address account, uint256[] memory ids, uint256[] memory values) public {
+    function burnBatch(address account, uint256[] memory ids, uint256[] memory values) external {
         require(
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not token owner nor approved"
@@ -81,12 +94,44 @@ contract ExoticNFT is ERC1155, Ownable {
         _burnBatch(account, ids, values);
     }
 
-    function maxChanceValue() public pure returns (uint256) {
-        return 93;
+    /**
+     * @dev See {ERC1155-_beforeTokenTransfer}.
+     */
+    function _beforeTokenTransfer(
+        address /*operator*/,
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory /*data*/
+    ) internal override(ERC1155) {
+        //super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+
+        if (from == address(0)) {
+            for (uint256 i = 0; i < ids.length; ++i) {
+                _totalSupply[ids[i]] += amounts[i];
+            }
+        }
+
+        if (to == address(0)) {
+            for (uint256 i = 0; i < ids.length; ++i) {
+                uint256 id = ids[i];
+                uint256 amount = amounts[i];
+                uint256 supply = _totalSupply[id];
+                require(supply >= amount, "ERC1155: burn amount exceeds totalSupply");
+                unchecked {
+                    _totalSupply[id] = supply - amount;
+                }
+            }
+        }
+    }
+
+    function maxChanceValue() public view returns (uint256) {
+        return _idsArray.length;
     }
 
     function uri(uint256 id) public view override returns (string memory) {
-        // id = _idsArray[id];
+        //uint256 _id = _idsArray[id];
         return
             string(
                 abi.encodePacked(
@@ -121,37 +166,5 @@ contract ExoticNFT is ERC1155, Ownable {
      */
     function exists(uint256 id) public view returns (bool) {
         return totalSupply(id) > 0;
-    }
-
-    /**
-     * @dev See {ERC1155-_beforeTokenTransfer}.
-     */
-    function _beforeTokenTransfer(
-        address operator,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) internal override(ERC1155) {
-        //super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-
-        if (from == address(0)) {
-            for (uint256 i = 0; i < ids.length; ++i) {
-                _totalSupply[ids[i]] += amounts[i];
-            }
-        }
-
-        if (to == address(0)) {
-            for (uint256 i = 0; i < ids.length; ++i) {
-                uint256 id = ids[i];
-                uint256 amount = amounts[i];
-                uint256 supply = _totalSupply[id];
-                require(supply >= amount, "ERC1155: burn amount exceeds totalSupply");
-                unchecked {
-                    _totalSupply[id] = supply - amount;
-                }
-            }
-        }
     }
 }

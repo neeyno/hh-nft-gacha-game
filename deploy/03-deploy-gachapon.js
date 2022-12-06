@@ -29,7 +29,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     }
 
     const gachaArgs = [
-        CHANCE_ARRAY,
+        //CHANCE_ARRAY,
         vrfCoordinatorV2address,
         subscriptionId,
         networkConfig[chainId]["gasLane"],

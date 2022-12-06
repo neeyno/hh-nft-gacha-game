@@ -1,7 +1,7 @@
 const { assert, expect } = require("chai")
 const { BigNumber } = require("ethers")
 const { ethers, deployments, network } = require("hardhat")
-const { developmentChains, CHANCE_ARRAY, NFT_SUPPLY } = require("../../helper-hardhat-config")
+const { developmentChains, CHANCE_ARRAY } = require("../../helper-hardhat-config")
 
 const chainId = network.config.chainId
 
@@ -20,9 +20,9 @@ const chainId = network.config.chainId
           })
 
           beforeEach(async function () {
-              await deployments.fixture(["mock", "main", "setup"])
-              nft = await ethers.getContract("ExoticNFT")
-              token = await ethers.getContract("ExoticToken")
+              await deployments.fixture(["mock", "main"]) //, "setup"])
+              //nft = await ethers.getContract("ExoticNFT")
+              //token = await ethers.getContract("ExoticToken")
               gacha = await ethers.getContract("Gachapon")
               vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
           })
@@ -38,11 +38,13 @@ const chainId = network.config.chainId
                   assert.equal(vrfAddress, vrfCoordinatorV2Mock.address)
               })
 
-              it("initializes with given chance array", async function () {
-                  const actualChances = await gacha.getChanceArray()
-                  assert.equal(actualChances.toString(), CHANCE_ARRAY.toString())
-              })
+              //   it("initializes with given chance array", async function () {
+              //       const actualChances = await gacha.getChanceArray()
+              //       assert.equal(actualChances.toString(), CHANCE_ARRAY.toString())
+              //   })
           })
+
+          describe("Setup gacha", function () {})
 
           describe("Single pull", function () {
               beforeEach(async function () {

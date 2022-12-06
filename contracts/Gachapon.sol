@@ -5,7 +5,7 @@ pragma solidity 0.8.13;
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+//import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface Itoken {
@@ -14,19 +14,32 @@ interface Itoken {
     function burn(address from, uint256 amount) external returns (bool);
 }
 
+interface Inft is IERC1155 {
+    function mint(address account, uint256 id, uint256 amount, bytes memory data) external;
+
+    function mintBatch(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) external;
+
+    function maxChanceValue() external view returns (uint256);
+}
+
 /**
  * @title Nft gacha contract
  * @author neeyno
  * @dev This contract implements Chainlink VRFv2 and simple gacha-mechanics
  */
-contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
+contract Gachapon is VRFConsumerBaseV2, Ownable {
     //
     /* -- ERRORS -- */
 
-    error Gacha_RngOutOfRange();
+    //error Gacha_RngOutOfRange();
     error Gacha_InsufficientValue();
-    error Gacha_deployFailed();
-    //error Gachapon__InsufficientBalance();
+    error Gacha_DeployFailed();
+    error Gacha_TransferFailed();
 
     /* -- Chainlink VRF variables -- */
 
@@ -43,33 +56,37 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
     uint256 private constant FEE_SINGLE = 50000000000000000000;
     uint256 private constant FEE_MULTI = 500000000000000000000;
     uint256 private immutable _packPrice;
-    uint256[] private _chanceArray;
-    mapping(uint256 => address) private _requestIdToSender;
-    IERC1155 private _nft;
+    uint256 private _maxChanceValue; //uint256[] private _chanceArray;
+    Inft private _nft;
     Itoken private _token;
+    mapping(uint256 => address) private _requestIdToSender;
 
     /* -- EVENTS -- */
 
     event PullRequested(uint256 indexed requestId, address indexed sender, uint32 numWords);
     event PullFulfilled(uint256 indexed requestId, address indexed owner, uint256[] nftId);
+    event PackBought(address buyer);
 
     /* -- FUNCTIONS -- */
 
     constructor(
-        uint256[] memory chanceArray,
+        //uint256[] memory chanceArray,
         address vrfCoordinatorV2,
         uint64 subscriptionId,
         bytes32 gasLane, // keyHash
         uint32 callbackGasLimit,
-        uint256 price
+        uint256 packPrice
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
-        _chanceArray = chanceArray;
+        //_chanceArray = chanceArray;
         _vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         _subscriptionId = subscriptionId;
         _gasLane = gasLane;
         _callbackGasLimit = callbackGasLimit;
-        _packPrice = price;
+        _packPrice = packPrice;
     }
+
+    // receive
+    // fallback
 
     /**
      * @dev The function mints in-game tokens to the buyer address for a fixed amount of Eth.
@@ -78,14 +95,16 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
     function buyTokenPack() external payable {
         if (msg.value < _packPrice) revert Gacha_InsufficientValue();
         _token.mint(msg.sender, FEE_SINGLE * 27);
+        emit PackBought(msg.sender);
     }
 
     /**
      * withdraws ETH from this contract to the address of the owner.
      */
-    function withdraw() external {
-        payable(owner()).call{value: address(this).balance}("");
-    }
+    // function withdraw() external {
+    //     (bool success, ) = payable(owner()).call{value: address(this).balance}("");
+    //     if (!success) revert Gacha_TransferFailed();
+    // }
 
     /**
      * @dev Single pull function - burns fixed amount of in-game tokens thats equal to FEE_SINGLE
@@ -133,75 +152,117 @@ contract Gachapon is VRFConsumerBaseV2, ERC1155Holder, Ownable {
         emit PullRequested(requestId, sender, NUM_WORDS_MULTI);
     }
 
-    /**
-     * @dev This is function that Chainlink VRF node calls to fulfill request
-     * and send NFTs to the owner.
-     * @param requestId is given when a user calls pull funtions
-     * @param randomWords are random numbers from Chainlink VRF response.
-     */
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-        address owner = _requestIdToSender[requestId];
-        uint256[] memory chanceArray = _chanceArray;
-
-        if (randomWords.length == NUM_WORDS_SINGLE) {
-            randomWords[0] = _getIdFromRNG(randomWords[0], chanceArray);
-            _nft.safeTransferFrom(address(this), owner, randomWords[0], NUM_WORDS_SINGLE, "");
-        } else {
-            uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
-            for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
-                randomWords[i] = (_getIdFromRNG(randomWords[i], chanceArray));
-                batchNftAmount[i] = 1;
-                unchecked {
-                    ++i;
-                }
-            }
-            _nft.safeBatchTransferFrom(address(this), owner, randomWords, batchNftAmount, "");
-        }
-        emit PullFulfilled(requestId, owner, randomWords);
-    }
-
-    function setNftContract(bytes memory _code) external onlyOwner returns (address addr) {
+    function setNft(bytes memory code) external onlyOwner returns (address nftAddress) {
         assembly {
             //(create v, p, n)
             // v -amount eth to send
             // p - pointer in memory to start of code
             // n - size of code
-            addr := create(0, add(_code, 0x20), mload(_code))
+            nftAddress := create(callvalue(), add(code, 0x20), mload(code))
         }
-        if (addr == address(0)) revert Gacha_deployFailed();
+        if (nftAddress == address(0)) revert Gacha_DeployFailed();
+        _nft = Inft(nftAddress);
+        _maxChanceValue = _nft.maxChanceValue();
         //return addr;
-        //_nft = IERC1155(nftAddress);
     }
 
-    function setToken(address tokenAddress) external onlyOwner {
+    function setToken(bytes memory code) external onlyOwner returns (address tokenAddress) {
+        assembly {
+            tokenAddress := create(callvalue(), add(code, 0x20), mload(code))
+        }
+        if (tokenAddress == address(0)) revert Gacha_DeployFailed();
         _token = Itoken(tokenAddress);
+    }
+
+    function execute(
+        address payable target,
+        uint256 msgValue,
+        bytes memory data
+    ) external payable onlyOwner returns (bytes memory) {
+        (bool success, bytes memory _data) = target.call{value: msgValue}(data);
+        if (!success) revert Gacha_TransferFailed();
+        return _data;
+    }
+
+    /**
+     * @dev This is the function that Chainlink VRF node calls to fulfill request
+     * and send NFTs to the owner.
+     * @param requestId is given when a user calls pull funtions
+     * @param randomWords are random numbers from Chainlink VRF response.
+     */
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+        //address owner = _requestIdToSender[requestId];
+        //uint256[] memory chanceArray = _chanceArray;
+        if (randomWords.length == NUM_WORDS_MULTI) {
+            _fulfillMultiPull(requestId, randomWords);
+        } else {
+            _fulfillSinglePull(requestId, randomWords);
+        }
+
+        // if (randomWords.length == NUM_WORDS_SINGLE) {
+        //     randomWords[0] = _getRandomId(randomWords[0], maxChanceValue);
+        //     _nft.mint(owner, randomWords[0], NUM_WORDS_SINGLE, "");
+        // } else {
+        //     uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
+        //     for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
+        //         randomWords[i] = (_getIdFromRNG(randomWords[i], chanceArray));
+        //         batchNftAmount[i] = 1;
+        //         unchecked {
+        //             ++i;
+        //         }
+        //     }
+        //     _nft.safeBatchTransferFrom(address(this), owner, randomWords, batchNftAmount, "");
+        // }
+        // emit PullFulfilled(requestId, owner, randomWords);
     }
 
     /**
      * @dev Transforms an initial randomWords to a number
-     * between 1 and max chance value inclusively
+     * between 0 and (max chance value -1) inclusively
      */
-    function _getIdFromRNG(
-        uint256 randomNum,
-        uint256[] memory chanceArray
-    ) private pure returns (uint256) {
-        unchecked {
-            randomNum = (randomNum % chanceArray[0]) + 1;
-            for (uint256 i = 0; i < chanceArray.length - 1; ) {
-                if (randomNum > chanceArray[i + 1]) {
-                    //&& rng <= chanceArray[i]) {
-                    return i;
-                }
+    function _fulfillMultiPull(uint256 requestId, uint256[] memory randomWords) private {
+        address owner = _requestIdToSender[requestId];
+        uint256 maxChanceValue = _maxChanceValue;
+        uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
+        for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
+            unchecked {
+                randomWords[i] = randomWords[i] % maxChanceValue;
+                batchNftAmount[i] = 1;
                 ++i;
             }
         }
-        revert Gacha_RngOutOfRange();
+        _nft.mintBatch(owner, randomWords, batchNftAmount, "");
+        emit PullFulfilled(requestId, owner, randomWords);
     }
+
+    function _fulfillSinglePull(uint256 requestId, uint256[] memory randomWords) private {
+        address owner = _requestIdToSender[requestId];
+        randomWords[0] = randomWords[0] % _maxChanceValue;
+        _nft.mint(owner, randomWords[0], NUM_WORDS_SINGLE, "");
+        emit PullFulfilled(requestId, owner, randomWords);
+    }
+
+    // function _getIdFromRNG(
+    //     uint256 randomNum,
+    //     uint256[] memory chanceArray
+    // ) private pure returns (uint256) {
+    //     unchecked {
+    //         randomNum = (randomNum % chanceArray[0]) + 1;
+    //         for (uint256 i = 0; i < chanceArray.length - 1; ) {
+    //             if (randomNum > chanceArray[i + 1]) {
+    //                 //&& rng <= chanceArray[i]) {
+    //                 return i;
+    //             }
+    //             ++i;
+    //         }
+    //     }
+    //     revert Gacha_RngOutOfRange();
+    // }
 
     /* -- Getter FUNCTIONS -- */
 
-    function getChanceArray() external view returns (uint256[] memory) {
-        return _chanceArray;
+    function getMaxChanceValue() external view returns (uint256) {
+        return _maxChanceValue;
     }
 
     function getUserByRequest(uint256 requestId) external view returns (address) {
