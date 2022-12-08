@@ -28,7 +28,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     // ExoticNFT bytecode
     const idsArray = genArray(CHANCE_ARRAY)
     //abi.encodePacked(bytecode, abi.encode(x, y))
-    const nftArgs = abi.encode(["string[]", "uint8[]"], [imageURI, idsArray])
+    const nftArgs = abi.encode(["string[9]"], [imageURI]) //, idsArray])
     const nftCode = ethers.utils.solidityPack(["bytes", "bytes"], [nft.bytecode, nftArgs])
 
     // ExoticToken bytecode

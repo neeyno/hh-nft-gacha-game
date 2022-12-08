@@ -2,16 +2,17 @@
 
 pragma solidity 0.8.13;
 
-//import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 //import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 //import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 //import "base64-sol/base64.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+// import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+//import "./ERC1155.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ExoticNFT is ERC1155, Ownable {
+contract ExoticNFT is ERC1155Supply, Ownable {
     using Strings for uint256;
     //
     uint256 private constant LEGENDARY_0 = 0;
@@ -25,8 +26,8 @@ contract ExoticNFT is ERC1155, Ownable {
     uint256 private constant COMMON_2 = 8;
 
     string private constant base64jsonPrefix = "data:application/json;base64,";
-    string[] private _imageURI;
-    string[] private _name = [
+    string[9] private _imageURI;
+    string[9] private _name = [
         "LEGENDARY0",
         "LEGENDARY1",
         "LEGENDARY2"
@@ -37,17 +38,15 @@ contract ExoticNFT is ERC1155, Ownable {
         "COMMON1",
         "COMMON2"
     ];
-    uint8[] private _idsArray; // = [0, 0, 0, 1, 1, 1, 2, 2, 2...];
+    //uint256[93] private _idsArray; // = [0, 0, 0, 1, 1, 1, 2, 2, 2...];
     uint256 private blockTimeLimit;
-
-    mapping(uint256 => uint256) private _totalSupply;
 
     /**
      * @dev Initializes the contract setting the ImageURI and items id array.
      */
-    constructor(string[] memory imageUri, uint8[] memory idsArray) ERC1155("") {
+    constructor(string[9] memory imageUri) ERC1155("") {
         _imageURI = imageUri;
-        _idsArray = idsArray;
+        //_idsArray = idsArray;
     }
 
     function mint(
@@ -56,8 +55,8 @@ contract ExoticNFT is ERC1155, Ownable {
         uint256 amount,
         bytes memory data
     ) external onlyOwner {
-        uint8 _id = _idsArray[id]; // modified
-        _mint(account, _id, amount, data);
+        //uint256 _id = rangeId(id); // modified
+        _mint(account, id, amount, data);
     }
 
     function mintBatch(
@@ -66,13 +65,13 @@ contract ExoticNFT is ERC1155, Ownable {
         uint256[] memory amounts,
         bytes memory data
     ) external onlyOwner {
-        uint8[] memory idsArray = _idsArray; // modified
-        for (uint256 i = 0; i < idsArray.length; ) {
-            ids[i] = idsArray[ids[i]];
-            unchecked {
-                ++i;
-            }
-        }
+        //uint256[93] memory idsArray = _idsArray; // modified
+        // for (uint256 i = 0; i < ids.length; ) {
+        //     ids[i] = calcId(ids[i]); //0.0745116x+1.93851
+        //     unchecked {
+        //         ++i;
+        //     }
+        // }
         _mintBatch(to, ids, amounts, data);
     }
 
@@ -94,40 +93,21 @@ contract ExoticNFT is ERC1155, Ownable {
         _burnBatch(account, ids, values);
     }
 
-    /**
-     * @dev See {ERC1155-_beforeTokenTransfer}.
-     */
-    function _beforeTokenTransfer(
-        address /*operator*/,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory /*data*/
-    ) internal override(ERC1155) {
-        //super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-
-        if (from == address(0)) {
-            for (uint256 i = 0; i < ids.length; ++i) {
-                _totalSupply[ids[i]] += amounts[i];
-            }
-        }
-
-        if (to == address(0)) {
-            for (uint256 i = 0; i < ids.length; ++i) {
-                uint256 id = ids[i];
-                uint256 amount = amounts[i];
-                uint256 supply = _totalSupply[id];
-                require(supply >= amount, "ERC1155: burn amount exceeds totalSupply");
-                unchecked {
-                    _totalSupply[id] = supply - amount;
-                }
+    function idRange(uint256 id) public pure returns (uint256) {
+        unchecked {
+            if (id > 17) {
+                return (4 * id + 528) / 100;
+            } else if (id > 2) {
+                return (2 * id + 24) / 10;
+            } else {
+                return id;
             }
         }
     }
 
-    function maxChanceValue() public view returns (uint256) {
-        return _idsArray.length;
+    ///
+    function maxChanceValue() public pure returns (uint256) {
+        return 93;
     }
 
     function uri(uint256 id) public view override returns (string memory) {
@@ -143,7 +123,7 @@ contract ExoticNFT is ERC1155, Ownable {
                                 _name[id],
                                 ' NFT", "description": "Test gacha NFT collection", ',
                                 '"attributes": [{"trait_type": "Rarity", "value": "1/',
-                                Strings.toString(_totalSupply[id]),
+                                Strings.toString(totalSupply(id)),
                                 '"}], "image":"',
                                 _imageURI[id],
                                 '"}'
@@ -152,19 +132,5 @@ contract ExoticNFT is ERC1155, Ownable {
                     )
                 )
             );
-    }
-
-    /**
-     * @dev Total amount of tokens in with a given id.
-     */
-    function totalSupply(uint256 id) public view returns (uint256) {
-        return _totalSupply[id];
-    }
-
-    /**
-     * @dev Indicates whether any token exist with a given id, or not.
-     */
-    function exists(uint256 id) public view returns (bool) {
-        return totalSupply(id) > 0;
     }
 }

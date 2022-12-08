@@ -1,7 +1,7 @@
 const { assert, expect } = require("chai")
 const { BigNumber } = require("ethers")
 const { ethers, deployments, network } = require("hardhat")
-const { developmentChains, CHANCE_ARRAY } = require("../../helper-hardhat-config")
+const { developmentChains, networkConfig, CHANCE_ARRAY } = require("../../helper-hardhat-config")
 
 const chainId = network.config.chainId
 
@@ -12,6 +12,7 @@ const chainId = network.config.chainId
 
           const FEE_SINGLE = ethers.utils.parseUnits("50", 18)
           const FEE_MULTI = ethers.utils.parseUnits("500", 18)
+          const TOKEN_PACK = networkConfig[chainId]["tokenPrice"]
 
           before(async () => {
               const accounts = await ethers.getSigners()
@@ -20,35 +21,59 @@ const chainId = network.config.chainId
           })
 
           beforeEach(async function () {
-              await deployments.fixture(["mock", "main"]) //, "setup"])
-              //nft = await ethers.getContract("ExoticNFT")
-              //token = await ethers.getContract("ExoticToken")
+              await deployments.fixture(["mock", "main", "setup"])
               gacha = await ethers.getContract("Gachapon")
               vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
+
+              nft = await ethers.getContractAt("ExoticNFT", await gacha.getNftAddress())
+              token = await ethers.getContractAt("ExoticToken", await gacha.getTokenAddress())
           })
 
           describe("Contructor", function () {
-              //   it("should set nft contract address", async function () {
-              //       const nftAddress = await gacha.getNftAddress()
-              //       assert.equal(nftAddress, nft.address)
-              //   })
-
-              it("sets VRFCoordinatorV2 address", async function () {
+              it("should set VRFCoordinatorV2 address", async function () {
                   const vrfAddress = await gacha.getVrfCoordinator()
                   assert.equal(vrfAddress, vrfCoordinatorV2Mock.address)
               })
-
-              //   it("initializes with given chance array", async function () {
-              //       const actualChances = await gacha.getChanceArray()
-              //       assert.equal(actualChances.toString(), CHANCE_ARRAY.toString())
-              //   })
           })
 
-          describe("Setup gacha", function () {})
+          describe("Setup gacha", function () {
+              it("deploys nft contract and sets max chance value", async function () {
+                  const nftAddress = await gacha.getNftAddress()
+                  expect(nftAddress).to.be.properAddress
+
+                  const maxChanceVal = await gacha.getMaxChanceValue()
+                  const expectedVal = CHANCE_ARRAY[CHANCE_ARRAY.length - 1]
+                  assert.equal(maxChanceVal.toString(), expectedVal.toString())
+              })
+              it("deploys token contract", async function () {
+                  const tokenAddress = await gacha.getTokenAddress()
+                  expect(tokenAddress).to.be.properAddress
+              })
+          })
+
+          describe("Buy token pack", function () {
+              it("reverts if player doesn't send enouth ETH", async () => {
+                  await expect(gacha.connect(player).buyTokenPack()).to.be.revertedWith(
+                      "Gacha_InsufficientValue()"
+                  )
+              })
+
+              it("mints tokens to the buyer", async () => {
+                  await expect(() =>
+                      gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+                  ).to.changeTokenBalance(token, player, ethers.utils.parseUnits("1350", 18))
+              })
+          })
 
           describe("Single pull", function () {
               beforeEach(async function () {
-                  await token.connect(player).mint(player.address, FEE_SINGLE)
+                  await gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+              })
+
+              it("reverts if the player has insufficient token balance", async () => {
+                  await expect(gacha.connect(deployer).pullSingle()).to.be.revertedWith(
+                      "ERC20: burn amount exceeds balance"
+                  )
               })
 
               it("tracks player when they pull", async () => {
@@ -60,13 +85,6 @@ const chainId = network.config.chainId
 
                   assert.equal(contractPlayer, player.address)
                   assert.equal(sender, player.address)
-              })
-
-              it("reverts if the player has insufficient balance", async () => {
-                  await gacha.connect(player).pullSingle()
-                  await expect(gacha.connect(player).pullSingle()).to.be.revertedWith(
-                      "ERC20: burn amount exceeds balance"
-                  )
               })
 
               it("emits event on single pull", async () => {
@@ -82,9 +100,16 @@ const chainId = network.config.chainId
                   )
               })
           })
+
           describe("Multi pull", function () {
               beforeEach(async function () {
-                  await token.connect(player).mint(player.address, FEE_MULTI)
+                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+              })
+
+              it("reverts if the player has insufficient balance", async () => {
+                  await expect(gacha.connect(deployer).pullMulti()).to.be.revertedWith(
+                      "ERC20: burn amount exceeds balance"
+                  )
               })
 
               it("tracks player when they pull", async () => {
@@ -104,13 +129,6 @@ const chainId = network.config.chainId
                       .withArgs(BigNumber.from(1), player.address, BigNumber.from(10))
               })
 
-              it("reverts if the player has insufficient balance", async () => {
-                  await gacha.connect(player).pullMulti()
-                  await expect(gacha.connect(player).pullMulti()).to.be.revertedWith(
-                      "ERC20: burn amount exceeds balance"
-                  )
-              })
-
               it("vrf coordinator receives the request", async function () {
                   await expect(gacha.connect(player).pullMulti()).to.emit(
                       vrfCoordinatorV2Mock,
@@ -121,7 +139,7 @@ const chainId = network.config.chainId
 
           describe("fulfillRandomWords Single", function () {
               beforeEach(async function () {
-                  await token.connect(player).mint(player.address, FEE_SINGLE)
+                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
               })
               it("should transfer Single nft", async () => {
                   const tx = await gacha.connect(player).pullSingle()
@@ -134,13 +152,21 @@ const chainId = network.config.chainId
                       // setting up the listener
                       nft.once(filter, async (operator, from, to, id, value) => {
                           try {
-                              //console.log(operator, from, to, id, value)
-                              const playerBalance = await nft.balanceOf(player.address, id)
+                              const addrArray = [...Array(CHANCE_ARRAY.length)].map(
+                                  (_) => player.address
+                              )
+                              const idArray = [...Array(CHANCE_ARRAY.length)].map((_, i) => i)
+                              const batchBalance = await nft.balanceOfBatch(addrArray, idArray)
+                              let totalPlayerBalance = BigNumber.from(0)
+                              batchBalance.map((value) => {
+                                  totalPlayerBalance = totalPlayerBalance.add(value)
+                              })
+
                               assert.equal(operator, gacha.address)
-                              assert.equal(from, gacha.address)
+                              assert.equal(from, "0x0000000000000000000000000000000000000000")
                               assert.equal(to, player.address)
                               assert.equal(value.toString(), "1")
-                              assert.equal(playerBalance.toString(), "1")
+                              assert.equal(totalPlayerBalance.toString(), "1")
 
                               console.log(id.toString())
 
@@ -187,7 +213,7 @@ const chainId = network.config.chainId
           })
           describe("fulfillRandomWords Multi", function () {
               beforeEach(async function () {
-                  await token.connect(player).mint(player.address, FEE_MULTI)
+                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
               })
               it("should transfer Multiple nft", async () => {
                   const tx = await gacha.connect(player).pullMulti()
@@ -203,10 +229,10 @@ const chainId = network.config.chainId
                               //let playerIds = [...Array(10)].map((_) => player.address)
                               //playerIds.apply(null, Array(10)).map((_) => player.address) // ['addr', 'addr', ...]
 
-                              const addrArray = [...Array(NFT_SUPPLY.length)].map(
+                              const addrArray = [...Array(CHANCE_ARRAY.length)].map(
                                   (_) => player.address
                               )
-                              const idArray = [...Array(NFT_SUPPLY.length)].map((_, i) => i)
+                              const idArray = [...Array(CHANCE_ARRAY.length)].map((_, i) => i)
                               const batchBalance = await nft.balanceOfBatch(addrArray, idArray)
                               let totalPlayerBalance = BigNumber.from(0)
                               batchBalance.map((value) => {
@@ -214,7 +240,7 @@ const chainId = network.config.chainId
                               })
 
                               assert.equal(operator, gacha.address)
-                              assert.equal(from, gacha.address)
+                              assert.equal(from, "0x0000000000000000000000000000000000000000")
                               assert.equal(to, player.address)
                               assert.equal(totalPlayerBalance.toString(), "10")
 

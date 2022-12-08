@@ -99,7 +99,7 @@ module.exports = {
         },
     },
     gasReporter: {
-        enabled: false,
+        enabled: true,
         outputFile: "gas-report.txt",
         noColors: true,
         currency: "USD",
@@ -112,6 +112,6 @@ module.exports = {
         artifacts: "./artifacts",
     },
     mocha: {
-        timeout: 300000, // 1000 = 1sec
+        timeout: 60000, // 1000 = 1sec
     },
 }

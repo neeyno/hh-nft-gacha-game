@@ -16,13 +16,13 @@ const networkConfig = {
         subscriptionId: "2182",
         gasLane: "0xd4bb89654db74673a187bd804519e65e3f71a52bc55f11da7601a13dcf505314",
         callbackGasLimit: "300000",
-        tokenPrice: "100000000000000000",
+        tokenPrice: "10000000000000000",
     },
     31337: {
         name: "hardhat",
         gasLane: "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
         callbackGasLimit: "500000",
-        tokenPrice: "100000000000000000",
+        tokenPrice: "1000000000000000000",
     },
     80001: {
         name: "mumbai",
@@ -30,7 +30,7 @@ const networkConfig = {
         subscriptionId: "2649",
         gasLane: "0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f",
         callbackGasLimit: "300000",
-        tokenPrice: "100000000000000000",
+        tokenPrice: "10000000000000000",
     },
 }
 

@@ -14,7 +14,7 @@ interface Itoken {
     function burn(address from, uint256 amount) external returns (bool);
 }
 
-interface Inft is IERC1155 {
+interface Inft {
     function mint(address account, uint256 id, uint256 amount, bytes memory data) external;
 
     function mintBatch(
@@ -25,6 +25,8 @@ interface Inft is IERC1155 {
     ) external;
 
     function maxChanceValue() external view returns (uint256);
+
+    function idRange(uint256 id) external pure returns (uint256);
 }
 
 /**
@@ -70,7 +72,6 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
     /* -- FUNCTIONS -- */
 
     constructor(
-        //uint256[] memory chanceArray,
         address vrfCoordinatorV2,
         uint64 subscriptionId,
         bytes32 gasLane, // keyHash
@@ -226,7 +227,7 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
         uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
         for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
             unchecked {
-                randomWords[i] = randomWords[i] % maxChanceValue;
+                randomWords[i] = _nft.idRange(randomWords[i] % maxChanceValue);
                 batchNftAmount[i] = 1;
                 ++i;
             }
@@ -237,7 +238,7 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
 
     function _fulfillSinglePull(uint256 requestId, uint256[] memory randomWords) private {
         address owner = _requestIdToSender[requestId];
-        randomWords[0] = randomWords[0] % _maxChanceValue;
+        randomWords[0] = _nft.idRange(randomWords[0] % _maxChanceValue);
         _nft.mint(owner, randomWords[0], NUM_WORDS_SINGLE, "");
         emit PullFulfilled(requestId, owner, randomWords);
     }
@@ -269,7 +270,7 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
         return _requestIdToSender[requestId];
     }
 
-    function getNftAddress() external view returns (IERC1155) {
+    function getNftAddress() external view returns (Inft) {
         return _nft;
     }
 
