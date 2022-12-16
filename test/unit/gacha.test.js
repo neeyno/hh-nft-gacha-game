@@ -163,7 +163,7 @@ const chainId = network.config.chainId
                               })
 
                               assert.equal(operator, gacha.address)
-                              assert.equal(from, "0x0000000000000000000000000000000000000000")
+                              assert.equal(from, gacha.address) //"0x0000000000000000000000000000000000000000")
                               assert.equal(to, player.address)
                               assert.equal(value.toString(), "1")
                               assert.equal(totalPlayerBalance.toString(), "1")
@@ -240,7 +240,7 @@ const chainId = network.config.chainId
                               })
 
                               assert.equal(operator, gacha.address)
-                              assert.equal(from, "0x0000000000000000000000000000000000000000")
+                              assert.equal(from, gacha.address) //"0x0000000000000000000000000000000000000000")
                               assert.equal(to, player.address)
                               assert.equal(totalPlayerBalance.toString(), "10")
 

@@ -1,18 +1,6 @@
 const { network, ethers } = require("hardhat")
-const { developmentChains, networkConfig, CHANCE_ARRAY } = require("../helper-hardhat-config")
-const { genArray } = require("../utils/genArray")
-
-let imageURI = [
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
-]
+const { developmentChains, networkConfig, names, imageURI } = require("../helper-hardhat-config")
+// const { genArray } = require("../utils/genArray")
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
     const { log } = deployments
@@ -22,13 +10,14 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
 
     // const nft = await ethers.getContract("ExoticNFT", deployer)
     // const token = await ethers.getContract("ExoticToken", deployer)
-    const nft = await ethers.getContractFactory("ExoticNFT")
+    const nft = await ethers.getContractFactory("ExoNFT")
     const token = await ethers.getContractFactory("ExoticToken")
 
     // ExoticNFT bytecode
-    const idsArray = genArray(CHANCE_ARRAY)
+    //const idsArray = genArray(CHANCE_ARRAY)
     //abi.encodePacked(bytecode, abi.encode(x, y))
-    const nftArgs = abi.encode(["string[9]"], [imageURI]) //, idsArray])
+
+    const nftArgs = abi.encode(["string[]", "string[]"], [imageURI, names]) //, idsArray])
     const nftCode = ethers.utils.solidityPack(["bytes", "bytes"], [nft.bytecode, nftArgs])
 
     // ExoticToken bytecode

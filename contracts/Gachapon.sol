@@ -5,7 +5,7 @@ pragma solidity 0.8.13;
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-//import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface Itoken {
@@ -14,35 +14,29 @@ interface Itoken {
     function burn(address from, uint256 amount) external returns (bool);
 }
 
-interface Inft {
-    function mint(address account, uint256 id, uint256 amount, bytes memory data) external;
-
-    function mintBatch(
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) external;
-
+interface Inft is IERC1155 {
     function maxChanceValue() external view returns (uint256);
 
-    function idRange(uint256 id) external pure returns (uint256);
+    function totalSupply(uint256 id) external view returns (uint256);
+
+    function exists(uint256 id) external view returns (bool);
 }
+
+//
+/* -- ERRORS -- */
+
+//error Gacha_RngOutOfRange();
+error Gacha_InsufficientValue();
+error Gacha_DeployFailed();
+error Gacha_TransferFailed();
 
 /**
  * @title Nft gacha contract
  * @author neeyno
  * @dev This contract implements Chainlink VRFv2 and simple gacha-mechanics
  */
-contract Gachapon is VRFConsumerBaseV2, Ownable {
+contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
     //
-    /* -- ERRORS -- */
-
-    //error Gacha_RngOutOfRange();
-    error Gacha_InsufficientValue();
-    error Gacha_DeployFailed();
-    error Gacha_TransferFailed();
-
     /* -- Chainlink VRF variables -- */
 
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
@@ -78,7 +72,6 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
         uint32 callbackGasLimit,
         uint256 packPrice
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
-        //_chanceArray = chanceArray;
         _vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         _subscriptionId = subscriptionId;
         _gasLane = gasLane;
@@ -192,12 +185,12 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
      * @param randomWords are random numbers from Chainlink VRF response.
      */
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-        //address owner = _requestIdToSender[requestId];
+        address owner = _requestIdToSender[requestId];
         //uint256[] memory chanceArray = _chanceArray;
         if (randomWords.length == NUM_WORDS_MULTI) {
-            _fulfillMultiPull(requestId, randomWords);
+            _fulfillMultiPull(requestId, randomWords, owner);
         } else {
-            _fulfillSinglePull(requestId, randomWords);
+            _fulfillSinglePull(requestId, randomWords, owner);
         }
 
         // if (randomWords.length == NUM_WORDS_SINGLE) {
@@ -221,26 +214,46 @@ contract Gachapon is VRFConsumerBaseV2, Ownable {
      * @dev Transforms an initial randomWords to a number
      * between 0 and (max chance value -1) inclusively
      */
-    function _fulfillMultiPull(uint256 requestId, uint256[] memory randomWords) private {
-        address owner = _requestIdToSender[requestId];
+    function _fulfillMultiPull(
+        uint256 requestId,
+        uint256[] memory randomWords,
+        address account
+    ) private {
         uint256 maxChanceValue = _maxChanceValue;
         uint256[] memory batchNftAmount = new uint256[](NUM_WORDS_MULTI);
+        //uint8[10] memory rng = [0, 1, 1, 2, 0, 0, 0, 0, 0, 0];
         for (uint256 i = 0; i < NUM_WORDS_MULTI; ) {
             unchecked {
-                randomWords[i] = _nft.idRange(randomWords[i] % maxChanceValue);
+                randomWords[i] = _caclFromRange(randomWords[i] % maxChanceValue);
                 batchNftAmount[i] = 1;
                 ++i;
             }
         }
-        _nft.mintBatch(owner, randomWords, batchNftAmount, "");
-        emit PullFulfilled(requestId, owner, randomWords);
+        _nft.safeBatchTransferFrom(address(this), account, randomWords, batchNftAmount, "");
+        emit PullFulfilled(requestId, account, randomWords);
     }
 
-    function _fulfillSinglePull(uint256 requestId, uint256[] memory randomWords) private {
-        address owner = _requestIdToSender[requestId];
-        randomWords[0] = _nft.idRange(randomWords[0] % _maxChanceValue);
-        _nft.mint(owner, randomWords[0], NUM_WORDS_SINGLE, "");
-        emit PullFulfilled(requestId, owner, randomWords);
+    function _fulfillSinglePull(
+        uint256 requestId,
+        uint256[] memory randomWords,
+        address account
+    ) private {
+        randomWords[0] = _caclFromRange(randomWords[0] % _maxChanceValue);
+        _nft.safeTransferFrom(address(this), account, randomWords[0], NUM_WORDS_SINGLE, "");
+        emit PullFulfilled(requestId, account, randomWords);
+    }
+
+    function _caclFromRange(uint256 number) private pure returns (uint256) {
+        uint256 id = number;
+        unchecked {
+            if (id > 17) {
+                return (4 * id + 528) / 100;
+            } else if (id > 2) {
+                return (2 * id + 24) / 10;
+            } else {
+                return id;
+            }
+        }
     }
 
     // function _getIdFromRNG(
