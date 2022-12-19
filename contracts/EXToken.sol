@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract ExoticToken is ERC20, Ownable, Pausable {
+    uint256 private constant AMOUNT_TOKEN_PACK = 1421e18;
+
     constructor() ERC20("Exotic Token", "EXT") {
-        //_mint(msg.sender, initialSupply);
         _pause();
     }
 
-    function mint(address to, uint256 amount) external onlyOwner returns (bool) {
-        _mint(to, amount);
+    function mint(address to) external onlyOwner returns (bool) {
+        _mint(to, AMOUNT_TOKEN_PACK);
         return true;
     }
 

@@ -58,6 +58,10 @@ yarn hardhat test
 ```
 <hr>
 
+### not implemented yet
+- limited time availability functions
+- replaceable nft contracts
+
 ### Metadata URI
 * Example of metadata for one of the OpenSea [Metadata Standards](https://docs.opensea.io/docs/metadata-standards)
 * Opensea also support the [Enjin Metadata style](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1155.md#erc-1155-metadata-uri-json-schema)

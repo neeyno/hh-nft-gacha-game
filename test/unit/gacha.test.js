@@ -12,7 +12,7 @@ const chainId = network.config.chainId
 
           const FEE_SINGLE = ethers.utils.parseUnits("50", 18)
           const FEE_MULTI = ethers.utils.parseUnits("500", 18)
-          const TOKEN_PACK = networkConfig[chainId]["tokenPrice"]
+          const TOKEN_PACK_PRICE = networkConfig[chainId]["tokenPrice"]
 
           before(async () => {
               const accounts = await ethers.getSigners()
@@ -34,6 +34,11 @@ const chainId = network.config.chainId
                   const vrfAddress = await gacha.getVrfCoordinator()
                   assert.equal(vrfAddress, vrfCoordinatorV2Mock.address)
               })
+
+              it("should set token pack price", async function () {
+                  const packPrice = await gacha.getPackPrice()
+                  assert.equal(packPrice.toString(), TOKEN_PACK_PRICE)
+              })
           })
 
           describe("Setup gacha", function () {
@@ -41,10 +46,10 @@ const chainId = network.config.chainId
                   const nftAddress = await gacha.getNftAddress()
                   expect(nftAddress).to.be.properAddress
 
-                  const maxChanceVal = await gacha.getMaxChanceValue()
-                  const expectedVal = CHANCE_ARRAY[CHANCE_ARRAY.length - 1]
-                  assert.equal(maxChanceVal.toString(), expectedVal.toString())
+                  const maxChanceVal = await gacha.getMaxChance()
+                  assert.equal(maxChanceVal.toString(), "444")
               })
+
               it("deploys token contract", async function () {
                   const tokenAddress = await gacha.getTokenAddress()
                   expect(tokenAddress).to.be.properAddress
@@ -60,14 +65,14 @@ const chainId = network.config.chainId
 
               it("mints tokens to the buyer", async () => {
                   await expect(() =>
-                      gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
-                  ).to.changeTokenBalance(token, player, ethers.utils.parseUnits("1350", 18))
+                      gacha.connect(player).buyTokenPack({ value: TOKEN_PACK_PRICE })
+                  ).to.changeTokenBalance(token, player, ethers.utils.parseUnits("1421", 18))
               })
           })
 
           describe("Single pull", function () {
               beforeEach(async function () {
-                  await gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+                  await gacha.connect(player).buyTokenPack({ value: TOKEN_PACK_PRICE })
               })
 
               it("reverts if the player has insufficient token balance", async () => {
@@ -103,7 +108,7 @@ const chainId = network.config.chainId
 
           describe("Multi pull", function () {
               beforeEach(async function () {
-                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK_PRICE })
               })
 
               it("reverts if the player has insufficient balance", async () => {
@@ -139,7 +144,7 @@ const chainId = network.config.chainId
 
           describe("fulfillRandomWords Single", function () {
               beforeEach(async function () {
-                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK_PRICE })
               })
               it("should transfer Single nft", async () => {
                   const tx = await gacha.connect(player).pullSingle()
@@ -152,10 +157,8 @@ const chainId = network.config.chainId
                       // setting up the listener
                       nft.once(filter, async (operator, from, to, id, value) => {
                           try {
-                              const addrArray = [...Array(CHANCE_ARRAY.length)].map(
-                                  (_) => player.address
-                              )
-                              const idArray = [...Array(CHANCE_ARRAY.length)].map((_, i) => i)
+                              const addrArray = [...Array(12)].map((_) => player.address)
+                              const idArray = [...Array(12)].map((_, i) => i)
                               const batchBalance = await nft.balanceOfBatch(addrArray, idArray)
                               let totalPlayerBalance = BigNumber.from(0)
                               batchBalance.map((value) => {
@@ -213,7 +216,7 @@ const chainId = network.config.chainId
           })
           describe("fulfillRandomWords Multi", function () {
               beforeEach(async function () {
-                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK })
+                  gacha.connect(player).buyTokenPack({ value: TOKEN_PACK_PRICE })
               })
               it("should transfer Multiple nft", async () => {
                   const tx = await gacha.connect(player).pullMulti()
@@ -229,10 +232,8 @@ const chainId = network.config.chainId
                               //let playerIds = [...Array(10)].map((_) => player.address)
                               //playerIds.apply(null, Array(10)).map((_) => player.address) // ['addr', 'addr', ...]
 
-                              const addrArray = [...Array(CHANCE_ARRAY.length)].map(
-                                  (_) => player.address
-                              )
-                              const idArray = [...Array(CHANCE_ARRAY.length)].map((_, i) => i)
+                              const addrArray = [...Array(12)].map((_) => player.address)
+                              const idArray = [...Array(12)].map((_, i) => i)
                               const batchBalance = await nft.balanceOfBatch(addrArray, idArray)
                               let totalPlayerBalance = BigNumber.from(0)
                               batchBalance.map((value) => {

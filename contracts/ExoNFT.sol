@@ -20,12 +20,13 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  */
 contract ExoNFT is Context, ERC165, IERC1155 {
     using Address for address;
+    using Strings for uint256;
 
     string private constant base64jsonPrefix = "data:application/json;base64,";
 
     // Mapping from token ID to account balances
     //mapping(uint256 => mapping(address => uint256)) private _balances;
-    mapping(address => uint16[16]) private _balances;
+    mapping(address => uint16[12]) private _balances;
     mapping(uint256 => uint16) private _totalSupply;
 
     // Mapping from account to operator approvals
@@ -94,7 +95,7 @@ contract ExoNFT is Context, ERC165, IERC1155 {
                                 _nfts[id],
                                 '", "description": "Test gacha NFT collection", ',
                                 '"attributes": [{"trait_type": "Rarity", "value": "1/',
-                                Strings.toString(totalSupply(id)),
+                                totalSupply(id).toString(),
                                 '"}], "image":"',
                                 _imageURI[id],
                                 '"}'
@@ -106,7 +107,7 @@ contract ExoNFT is Context, ERC165, IERC1155 {
     }
 
     function maxChanceValue() public pure returns (uint256) {
-        return 93;
+        return 444;
     }
 
     /**
@@ -222,7 +223,7 @@ contract ExoNFT is Context, ERC165, IERC1155 {
         require(to != address(0), "ERC1155: transfer to the zero address");
 
         address operator = _msgSender();
-        uint16[16] memory fromBalance = _balances[from];
+        uint16[12] memory fromBalance = _balances[from];
 
         require(fromBalance[id] >= amount, "ERC1155: insufficient balance for transfer");
         unchecked {
@@ -257,8 +258,8 @@ contract ExoNFT is Context, ERC165, IERC1155 {
 
         address operator = _msgSender();
 
-        uint16[16] memory fromBalance = _balances[from];
-        uint16[16] memory toBalance = _balances[to];
+        uint16[12] memory fromBalance = _balances[from];
+        uint16[12] memory toBalance = _balances[to];
         for (uint256 i = 0; i < ids.length; ) {
             uint256 id = ids[i];
             require(fromBalance[id] >= amounts[i], "ERC1155: insufficient balance for transfer");
@@ -321,7 +322,7 @@ contract ExoNFT is Context, ERC165, IERC1155 {
 
         address operator = _msgSender();
 
-        uint16[16] memory mintToBalance = _balances[to];
+        uint16[12] memory mintToBalance = _balances[to];
         for (uint256 i = 0; i < ids.length; ) {
             uint256 id = ids[i];
             unchecked {
@@ -381,7 +382,7 @@ contract ExoNFT is Context, ERC165, IERC1155 {
         require(ids.length == amounts.length, "ERC1155: ids and amounts length mismatch");
 
         address operator = _msgSender();
-        uint16[16] memory fromBalance = _balances[from];
+        uint16[12] memory fromBalance = _balances[from];
 
         for (uint256 i = 0; i < ids.length; ) {
             uint256 id = ids[i];

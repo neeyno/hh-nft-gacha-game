@@ -6,14 +6,10 @@ const names = [
     "LEGENDARY1",
     "LEGENDARY2",
     "LEGENDARY3",
-    "LEGENDARY4",
-    "LEGENDARY5",
     "EPIC0",
     "EPIC1",
     "EPIC2",
     "EPIC3",
-    "EPIC4",
-    "EPIC5",
     "COMMON0",
     "COMMON1",
     "COMMON2",
@@ -24,15 +20,11 @@ const imageURI = [
     "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
     "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
     "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU", // 6 legendary
+    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU", // 4 legendary
     "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
     "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
     "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e", // 6 epic
+    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e", // 4 epic
     "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
     "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
     "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",

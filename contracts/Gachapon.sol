@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface Itoken {
-    function mint(address to, uint256 amount) external returns (bool);
+    function mint(address to) external returns (bool);
 
     function burn(address from, uint256 amount) external returns (bool);
 }
@@ -22,10 +22,8 @@ interface Inft is IERC1155 {
     function exists(uint256 id) external view returns (bool);
 }
 
-//
 /* -- ERRORS -- */
 
-//error Gacha_RngOutOfRange();
 error Gacha_InsufficientValue();
 error Gacha_DeployFailed();
 error Gacha_TransferFailed();
@@ -33,7 +31,7 @@ error Gacha_TransferFailed();
 /**
  * @title Nft gacha contract
  * @author neeyno
- * @dev This contract implements Chainlink VRFv2 and simple gacha-mechanics
+ * @dev Implements Chainlink VRFv2 and simple gacha-mechanics
  */
 contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
     //
@@ -80,7 +78,7 @@ contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
     }
 
     // receive
-    // fallback
+    // fallback() external payable {}
 
     /**
      * @dev The function mints in-game tokens to the buyer address for a fixed amount of Eth.
@@ -88,7 +86,7 @@ contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
      */
     function buyTokenPack() external payable {
         if (msg.value < _packPrice) revert Gacha_InsufficientValue();
-        _token.mint(msg.sender, FEE_SINGLE * 27);
+        _token.mint(msg.sender);
         emit PackBought(msg.sender);
     }
 
@@ -126,8 +124,8 @@ contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
     /**
      * @dev Multi pull function - burns fixed amount of in-game tokens thats equal to FEE_MULTI
      * and requests multi(10) random numbers from Chainlink VRF.
-     * @dev The function reverts if there is not enough tokens on a sender's balance
-     * @return requestId - a uniq id assigned to a user pull
+     * The function reverts if there is not enough tokens on a sender's balance
+     * @return requestId - id assigned to a user pull
      */
     function pullMulti() external returns (uint256 requestId) {
         address sender = _msgSender();
@@ -244,14 +242,13 @@ contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
     }
 
     function _caclFromRange(uint256 number) private pure returns (uint256) {
-        uint256 id = number;
         unchecked {
-            if (id > 17) {
-                return (4 * id + 528) / 100;
-            } else if (id > 2) {
-                return (2 * id + 24) / 10;
+            if (number > 43) {
+                return (number + 756) / 100;
+            } else if (number > 3) {
+                return (number + 36) / 10;
             } else {
-                return id;
+                return number;
             }
         }
     }
@@ -275,7 +272,11 @@ contract Gachapon is VRFConsumerBaseV2, Ownable, ERC1155Holder {
 
     /* -- Getter FUNCTIONS -- */
 
-    function getMaxChanceValue() external view returns (uint256) {
+    function getPackPrice() external view returns (uint256) {
+        return _packPrice;
+    }
+
+    function getMaxChance() external view returns (uint256) {
         return _maxChanceValue;
     }
 
