@@ -51,21 +51,18 @@ module.exports = {
         goerli: {
             url: GOERLI_RPC_URL,
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            saveDeployments: true,
             chainId: 5,
             blockConfirmations: 3,
         },
         bnbtest: {
             url: BNBTEST_RPC_URL,
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            saveDeployments: true,
             chainId: 97,
             blockConfirmations: 3,
         },
         mumbai: {
             url: MUMBAI_RPC_URL,
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            saveDeployments: true,
             chainId: 80001,
             blockConfirmations: 3,
         },
@@ -73,11 +70,13 @@ module.exports = {
             chainId: 31337,
             //blockGasLimit: 12450000,
             blockConfirmations: 1,
+            saveDeployments: true,
         },
         localhost: {
             url: "http://127.0.0.1:8545/",
             chainId: 31337,
             blockConfirmations: 1,
+            saveDeployments: true,
         },
     },
     namedAccounts: {

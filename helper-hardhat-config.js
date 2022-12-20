@@ -2,33 +2,33 @@ const { ethers } = require("hardhat")
 require("dotenv").config()
 
 const names = [
-    "LEGENDARY0",
-    "LEGENDARY1",
-    "LEGENDARY2",
-    "LEGENDARY3",
-    "EPIC0",
-    "EPIC1",
-    "EPIC2",
-    "EPIC3",
-    "COMMON0",
-    "COMMON1",
-    "COMMON2",
-    "COMMON3",
+    "Legendary Armor",
+    "Legendary Sword",
+    "Legendary Ring",
+    "Legendary Crown",
+    "Epic Armor",
+    "Epic Axe",
+    "Epic Bow",
+    "Epic Chest",
+    "Common Coin",
+    "Common Scroll",
+    "Common Chest",
+    "Common Fishbone",
 ]
 
 const imageURI = [
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU",
-    "QmX9p4ntWLY5TgKnMQCG6m3vQeUjGcSjJX5aFG31iXnmnU", // 4 legendary
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e",
-    "QmSvPV6zVwcwzkXu14eLQsbKn9f3F7fHbbuZQLc1dw4v1e", // 4 epic
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN",
-    "QmS3XLUz1124a26d3VhNt7FGwS7PixfC8Y8ShDDnQqGKiN", // 4 common
+    "ipfs://QmUXAj8gz3oghd3YXrFQ41JYKTW8SvK3Qs66Koq8aGAE5V",
+    "ipfs://QmV75gB3FBbavcLCPLctT5z6YVC9KCU2hrboSoTrT5m5R4",
+    "ipfs://QmUnQWamucPCqMykRhRUq1pWunbbj3xzKWWX5vZQSgDDgo",
+    "ipfs://QmUdDha6Rj8wkS8nbCRPCoCsgaJzkvzdVUaEhL4sJxUE2Q", // 4 legendary
+    "ipfs://QmQ2E8RkUpacxAt4y8MU2kXLANgH7xquX28Zdaas5pUhH3",
+    "ipfs://QmYXLNmW8EfmZqqxFjADRJ6RrP2Jmju6NXUUsk6nbrtz7k",
+    "ipfs://QmXeJPuNVoXjv5gW3syAN3dE9UsG3RbmJg1S4MwLB7jbi9",
+    "ipfs://QmVa2CpozuZsemPnNJfpQ6cLVMRCQUMeFZzgMenKwewEcA", // 4 epic
+    "ipfs://QmPV31m6vNzGXyZdoPDQMKYKepSsUCJzyAKzGzMhhHKGa1",
+    "ipfs://QmTYzNTpi4XvPWwLjT7FMKfYzJ1ZWKRJS8SWV7qgYq7DFc",
+    "ipfs://Qmdven3WvvBaXKzm3QLGcjqp1NbqMkfzijb5K8uX8stuxr",
+    "ipfs://Qmanwc7A483CLh1b82P6BnUvdfqPG7VBuRhmEwtG6Ba6aq", // 4 common
 ]
 
 const networkConfig = {

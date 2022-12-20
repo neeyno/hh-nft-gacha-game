@@ -93,7 +93,7 @@ contract ExoNFT is Context, ERC165, IERC1155 {
                             abi.encodePacked(
                                 '{"name":"',
                                 _nfts[id],
-                                '", "description": "Test gacha NFT collection", ',
+                                '", "description": "Test gacha game NFT collection", ',
                                 '"attributes": [{"trait_type": "Rarity", "value": "1/',
                                 totalSupply(id).toString(),
                                 '"}], "image":"',

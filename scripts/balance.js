@@ -10,8 +10,8 @@ async function balance() {
     const nft = await ethers.getContract("ExoticNFT")
     //const nftSupply = networkConfig[chainId]["nftSupply"]
 
-    const addrArray = [...Array(NFT_SUPPLY.length)].map((_) => gacha.address)
-    const idArray = [...Array(NFT_SUPPLY.length)].map((_, i) => i)
+    const addrArray = [...Array(12)].map((_) => gacha.address)
+    const idArray = [...Array(12)].map((_, i) => i)
 
     const gachaNftBalances = await nft.balanceOfBatch(addrArray, idArray)
     console.log(`Gacha nft balance: ${gachaNftBalances.toString()}`)

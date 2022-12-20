@@ -25,7 +25,7 @@ const chainId = network.config.chainId
               gacha = await ethers.getContract("Gachapon")
               vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
 
-              nft = await ethers.getContractAt("ExoticNFT", await gacha.getNftAddress())
+              nft = await ethers.getContractAt("ExoNFT", await gacha.getNftAddress())
               token = await ethers.getContractAt("ExoticToken", await gacha.getTokenAddress())
           })
 

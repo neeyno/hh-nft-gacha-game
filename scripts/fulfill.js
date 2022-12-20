@@ -9,7 +9,7 @@ async function pullMulti() {
     const gacha = await ethers.getContract("Gachapon")
     //const nft = await ethers.getContract("ExoticNFT")
 
-    const reqId = (await gacha.connect(deployer).callStatic.pullMulti()).sub(1)
+    const reqId = (await gacha.connect(deployer).callStatic.pullSingle()).sub(1)
     // const txReceipt = await txRes.wait(1)
     // const reqId = txReceipt.events[2].args.requestId
     // console.log("Pull request: " + reqId)
